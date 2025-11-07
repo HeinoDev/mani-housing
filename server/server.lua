@@ -12,6 +12,7 @@ CreateThread(function()
                 `houseid` INT(11) NOT NULL AUTO_INCREMENT,
                 `owner` VARCHAR(60) NULL DEFAULT '' COLLATE 'utf8mb4_0900_ai_ci',
                 `coords` LONGTEXT NOT NULL DEFAULT '[]' COLLATE 'utf8mb4_0900_ai_ci',
+                `shell` VARCHAR(25) NULL DEFAULT '' COLLATE 'utf8mb4_0900_ai_ci',
                 `decor` LONGTEXT NULL DEFAULT '[]' COLLATE 'utf8mb4_0900_ai_ci',
                 `salesdata` LONGTEXT NOT NULL DEFAULT '[]' COLLATE 'utf8mb4_0900_ai_ci',
                 `state` INT(1) NOT NULL DEFAULT '0',
@@ -46,6 +47,7 @@ CreateThread(function()
             HouseId = House.houseid,
             Owner = House.owner,
             Coords = json.decode(House.coords),
+            Shell = House.shell,
             Decor = json.decode(House.decor),
             SalesData = json.decode(House.salesdata),
             State = House.state,
@@ -93,9 +95,10 @@ lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
         }
     }
 
-    local HouseId = MySQL.insert.await('INSERT INTO `mani_houses` (`coords`, `salesdata`) VALUES (?, ?)', {
+    local HouseId = MySQL.insert.await('INSERT INTO `mani_houses` (`coords`, `salesdata`, `shell`) VALUES (?, ?, ?)', {
         json.encode(HouseData.Coords),
-        json.encode(HouseData.SalesData)
+        json.encode(HouseData.SalesData),
+        Data.Shell
     })
 
     if not HouseId then return false, 'ewow id no work' end
@@ -113,10 +116,4 @@ lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
     TriggerClientEvent('mani-housing:client:UpdateHouses', -1, HouseCache)
 
     return HouseId
-end)
-
-CreateThread(function()
-    SetInterval(function()
-        print(json.encode(HouseCache, { indent = true }))
-    end, 1000)
 end)

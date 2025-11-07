@@ -25,6 +25,7 @@ shared_scripts {
 files {
     'config.lua',
     'locales/*.json',
+    'open/cl_open.lua',
     'web/build/index.html',
     'web/build/**/*'
 }
