@@ -1,5 +1,11 @@
 local Config = lib.load('config')
-local Keybinds = {}
+
+RegisterCommand(Config.Commands['RealEstate'], function()
+    SetNuiFocus(true, true)
+    SendNUIMessage({
+        action = "OpenRealestate"
+    })
+end)
 
 RegisterNUICallback('CreateHouse', function(Data, cb)
     SetNuiFocus(false, false)

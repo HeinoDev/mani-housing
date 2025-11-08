@@ -6,26 +6,23 @@ local HousePoints, Models, GarageTick = {}, {}, nil
 
 lib.locale()
 
-RegisterCommand(Config.Commands['RealEstate'], function()
-    SetNuiFocus(true, true)
-    SendNUIMessage({
-        action = "OpenRealestate"
-    })
-end)
-
 RegisterNUICallback('HideUI', function(_, cb)
     SetNuiFocus(false, false)
     cb({})
 end)
 
-RegisterNetEvent('mani-housing:client:UpdateHouses', function(Houses, Action, NewData)
-    HouseCache = Houses
+RegisterCommand(Config.Commands['HouseInteraction'], function()
+    local HouseIndex = cache.currentHouse or cache.inHouse
+    if not HouseIndex then return end
+    
+    local House = HouseCache[HouseIndex]
+    if not House then return end
 
-    if Action == 'Create' then
-        
-    elseif Action == 'Remove' then
-        
-    end
+    SetNuiFocus(true, true)
+    SendNUIMessage({
+        action = "OpenHouseInteraction",
+        data = House
+    })
 end)
 
 local function Draw3DText(x, y, z, text)
@@ -131,8 +128,8 @@ local function EnterHouse(Data)
 end
 
 CreateThread(function()
-    Wait(500)
-    
+    Wait(1000)
+
     for HouseIndex, House in pairs(HouseCache) do
 
         local HouseCoords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z)
@@ -242,4 +239,17 @@ CreateThread(function()
         action = "InitializeUI",
         data = Config
     })
+end)
+
+RegisterNetEvent('mani-housing:client:UpdateHouse', function(House, Action)
+    if Action == 'Update' then
+        HouseCache[House.HouseId] = House
+        print(json.encode(House, { indent = true }))
+    elseif Action == 'Create' then
+        HouseCache[House.HouseId] = House
+        -- Lav creation point
+    elseif Action == 'Remove' then
+        HouseCache[House.HouseId] = nil
+        -- Fjern point
+    end
 end)

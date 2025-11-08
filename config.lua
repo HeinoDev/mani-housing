@@ -5,7 +5,8 @@ Config.WhitelistedJobs = {
 }
 
 Config.Commands = {
-    ['RealEstate'] = 'housing'
+    ['RealEstate'] = 'housing',
+	['HouseInteraction'] = 'house'
 }
 
 Config.Distances = {

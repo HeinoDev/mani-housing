@@ -1,8 +1,24 @@
-local Config, HouseClass = lib.load('config'), lib.load('server.class.house')
+local Config = lib.load('config')
 
-local HouseCache = {}
+local HouseCache, KeyholderCache, PlayerCache = {}, {}, {}
+
+local HouseClass = {}
+HouseClass.__index = HouseClass
 
 lib.locale()
+
+function HouseClass:New(Data)
+    return setmetatable({
+        HouseId = Data.HouseId,
+        Owner = Data.Owner,
+        Coords = Data.Coords,
+        Shell = Data.Shell,
+        Decor = Data.Decor,
+        SalesData = Data.SalesData,
+        State = Data.State,
+        Keyholders = {}
+    }, self)
+end
 
 CreateThread(function()
     local HouseSuccess, Houses = pcall(function() return MySQL.query.await('SELECT * FROM `mani_houses`') end)
@@ -31,7 +47,9 @@ CreateThread(function()
             CREATE TABLE IF NOT EXISTS `mani_housekeys` (
                 `identifier` VARCHAR(60) NOT NULL DEFAULT '' COLLATE 'utf8mb4_0900_ai_ci',
                 `keys` LONGTEXT NOT NULL DEFAULT '[]' COLLATE 'utf8mb4_0900_ai_ci',
-                INDEX `identifier` (`identifier`) USING BTREE
+                `character` VARCHAR(60) NULL DEFAULT '' COLLATE 'utf8mb4_0900_ai_ci',
+                UNIQUE INDEX `identifier` (`identifier`) USING BTREE,
+                CONSTRAINT `keys` CHECK (json_valid(`keys`))
             )
             COLLATE='utf8mb4_0900_ai_ci'
             ENGINE=InnoDB;
@@ -42,8 +60,8 @@ CreateThread(function()
 
     for i = 1, #Houses do
         local House = Houses[i]
-        
-        HouseCache[House.houseid] = setmetatable({
+
+        HouseCache[House.houseid] = HouseClass:New({
             HouseId = House.houseid,
             Owner = House.owner,
             Coords = json.decode(House.coords),
@@ -52,15 +70,22 @@ CreateThread(function()
             SalesData = json.decode(House.salesdata),
             State = House.state,
             Keyholders = {}
-        }, HouseClass)
+        })
     end
 
     for i = 1, #Keyholders do
         local Keyholder = Keyholders[i]
         local Keys = json.decode(Keyholder.keys)
 
+        PlayerCache[Keyholder.identifier] = PlayerCache[Keyholder.identifier] or {}
+        PlayerCache[Keyholder.identifier].Keys = PlayerCache[Keyholder.identifier].Keys or {}
+
         for HouseId, Data in pairs(Keys) do
-            HouseCache[HouseId].Keyholders[Keyholder.identifier] = Data
+            PlayerCache[Keyholder.identifier].Keys[HouseId] = Data
+            HouseCache[HouseId].Keyholders[Keyholder.identifier] = {
+                Character = Keyholder.character,
+                Permissions = Data
+            }
         end
     end
 
@@ -103,17 +128,47 @@ lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
 
     if not HouseId then return false, 'ewow id no work' end
 
-    local House = HouseClass:new({
+    local House = HouseClass:New({
+        HouseId = HouseId,
         Owner = '',
         Coords = HouseData.Coords,
+        Shell = Data.Shell,
         Decor = {},
         SalesData = HouseData.SalesData,
         State = 0,
+        Keyholders = {}
     })
 
     HouseCache[HouseId] = House
 
-    TriggerClientEvent('mani-housing:client:UpdateHouses', -1, HouseCache)
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, House, 'Update')
 
     return HouseId
 end)
+
+function HouseClass:AddKeyholder(Source, Permissions)
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return end
+
+    self.Keyholders[PlayerData.Identifier] = {
+        Character = PlayerData.Character.Fullname,
+        Permissions = Permissions
+    }
+
+    PlayerCache[PlayerData.Identifier] = PlayerCache[PlayerData.Identifier] or {}
+    PlayerCache[PlayerData.Identifier].Keys = PlayerCache[PlayerData.Identifier].Keys or {}
+
+    PlayerCache[PlayerData.Identifier].Keys[self.HouseId] = Permissions
+
+    MySQL.Async.execute('REPLACE INTO `mani_housekeys` (`identifier`, `keys`) VALUES (@identifier, @metadata)', {
+        ['@identifier'] = PlayerData.Identifier,
+        ['@metadata'] = json.encode(PlayerCache[PlayerData.Identifier].Keys),
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+end
+
+-- House:AddKeyholder(Source, {
+--     Enter = true,
+--     Garage = false
+-- })
