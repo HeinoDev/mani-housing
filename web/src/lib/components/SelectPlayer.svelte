@@ -1,0 +1,111 @@
+<script lang="ts">
+    import { NearbyPlayers } from "$lib/stores/VisibilityStore";
+    import { createEventDispatcher } from 'svelte';
+
+    const dispatch = createEventDispatcher();
+
+    export let selectedPlayers: string[] = [];
+
+    function CloseCreateModal() {
+        dispatch('close');
+    }
+
+    function HandleSubmit() {
+        if (selectedPlayers.length > 0) {
+            dispatch('submit', selectedPlayers);
+        }
+    }
+
+    function handlePlayerToggle(playerSource: string) {
+        if (selectedPlayers.includes(playerSource)) {
+            selectedPlayers = selectedPlayers.filter(shell => shell !== playerSource);
+        } else {
+            selectedPlayers = [...selectedPlayers, playerSource];
+        }
+    }
+</script>
+
+<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 select-none z-50">
+    <div class="w-[500px] bg-[#121212] rounded-md shadow-2xl flex flex-col overflow-hidden border border-[#333333] max-h-[80vh]">
+
+        <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <h1 class="text-white font-medium">Select Players</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button on:click={CloseCreateModal} class="text-gray-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 p-6 overflow-y-auto hide-scrollbar">
+            <div class="space-y-6">
+                <div>
+                    <div class="space-y-2 max-h-[300px] overflow-y-auto hide-scrollbar">
+                        {#each $NearbyPlayers as Player}
+                            <div class="flex items-center justify-between p-3 bg-[#1e1e1e] rounded-md border border-[#333333] hover:bg-[#2a2a2a] transition-colors cursor-pointer" on:click={() => handlePlayerToggle(Player.Source)}>
+                                <label for={`player-${Player.Source}`} class="text-white font-medium cursor-pointer">{Player.Name}</label>
+                                <div class="relative flex items-center">
+                                    <input 
+                                        type="checkbox" 
+                                        id={`player-${Player.Source}`} 
+                                        class="sr-only peer" 
+                                        checked={selectedPlayers.includes(Player.Source)}
+                                        on:change={() => handlePlayerToggle(Player.Source)}
+                                    />
+                                    <label for={`player-${Player.Source}`} class="relative flex items-center cursor-pointer">
+                                        <div class="w-4 h-4 bg-[#1e1e1e] border-2 border-[#333333] rounded peer-checked:bg-blue-400 peer-focus:ring-2 peer-focus:ring-blue-400 transition-all duration-200 peer-checked:border-blue-400"></div>
+                                        <div class="absolute inset-0 w-4 h-4 flex items-center justify-center pointer-events-none">
+                                            {#if selectedPlayers.includes(Player.Source)}
+                                                <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            {/if}
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-[#1e1e1e] border-t border-[#333333] px-6 py-4 flex justify-end">
+            <button on:click={HandleSubmit} disabled={selectedPlayers.length === 0} class="bg-blue-400 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                Select
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+   
+    .hide-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+    * {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+</style>

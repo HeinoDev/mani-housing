@@ -1,15 +1,12 @@
 local Config = lib.load('config')
 
+Wait(250)
+
 local HouseCache = lib.callback.await('mani-housing:server:GetHouses', false)
 local Util = lib.load('open.cl_open')
 local HousePoints, Models, GarageTick = {}, {}, nil
 
 lib.locale()
-
-RegisterNUICallback('HideUI', function(_, cb)
-    SetNuiFocus(false, false)
-    cb({})
-end)
 
 RegisterCommand(Config.Commands['HouseInteraction'], function()
     local HouseIndex = cache.currentHouse or cache.inHouse
@@ -23,11 +20,10 @@ RegisterCommand(Config.Commands['HouseInteraction'], function()
         action = "OpenHouseInteraction",
         data = House
     })
-end)
+end, false)
 
 local function Draw3DText(x, y, z, text)
     local onScreen, _x, _y = World3dToScreen2d(x, y, z)
-    local px, py, pz = table.unpack(GetGameplayCamCoords())
     local scale = 0.35
 
     if onScreen then
@@ -128,7 +124,7 @@ local function EnterHouse(Data)
 end
 
 CreateThread(function()
-    Wait(1000)
+    Wait(250)
 
     for HouseIndex, House in pairs(HouseCache) do
 

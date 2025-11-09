@@ -101,6 +101,48 @@ end)
 
 lib.callback.register('mani-housing:server:GetHouses', function() return HouseCache end)
 
+lib.callback.register('mani-housing:server:GetNearbyPlayers', function(Source, Coords)
+    local Players = lib.getNearbyPlayers(Coords, 7.5)
+    local PlayerTable = {}
+
+    for i = 1, #Players do
+        local Player = Players[i]
+        if Config.Debug or Player.id ~= Source then
+            local PlayerData = exports['mani-bridge']:GetPlayerData(Player.id)
+            PlayerTable[#PlayerTable + 1] = {
+                Name = PlayerData.Character.Fullname,
+                Source = Player.id
+            }
+        end
+    end
+
+    return PlayerTable
+end)
+
+lib.callback.register('mani-housing:server:GiveKeys', function(Source, Players, HouseId)
+    local House = HouseCache[HouseId]
+    if not House then return false, 'no house exist' end
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return end
+
+    local IsOwner = House.Owner == PlayerData.Identifier
+    local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier]['GiveKeys']
+
+    if not IsOwner or HasKey then return false, 'No hablo key' end
+
+    for i = 1, #Players do
+        local PlayerSource = Players[i]
+        House:AddKeyholder(PlayerSource, {
+            Enter = true,
+            Garage = false,
+            GiveKeys = false
+        })
+    end
+
+    return true
+end)
+
 lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
 
@@ -167,8 +209,3 @@ function HouseClass:AddKeyholder(Source, Permissions)
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
-
--- House:AddKeyholder(Source, {
---     Enter = true,
---     Garage = false
--- })

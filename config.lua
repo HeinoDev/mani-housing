@@ -1,5 +1,7 @@
 local Config = {}
 
+Config.Debug = true
+
 Config.WhitelistedJobs = {
 	'realestate'
 }

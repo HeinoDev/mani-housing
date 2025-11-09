@@ -16,3 +16,5 @@ export const Config = writable({});
 export const House = writable<any>({});
 
 export const Current = writable<string>("main");
+
+export const NearbyPlayers = writable<any>({});

@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { visibilityStore as visibility, House } from "$lib/stores/VisibilityStore";
+    import { visibilityStore as visibility, House, NearbyPlayers } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
+    import SelectPlayer from "./components/SelectPlayer.svelte";
 
     let expanded = $state({});
     let editingPermissions = $state({});
+    let showSelectPlayer = $state(false);
 
     function toggleExpanded(identifier: string, data: any) {
         if (!expanded[identifier]) {
@@ -40,11 +42,10 @@
     }
 
     function addKeyholder() {
-        // fetchNui("AddKeyholder", {
-        //     houseId: $House.HouseId,
-        //     identifier: newIdentifier,
-        //     character: newCharacter
-        // });
+        fetchNui('GetNearbyPlayers').then(Data => {
+            NearbyPlayers.set(Data)
+            showSelectPlayer = true;
+        })
     }
 
     function placeWardrobe() {
@@ -58,6 +59,15 @@
     function CloseUI() {
         fetchNui("HideUI");
         visibility.hide();
+    }
+
+    function GiveKey(event: CustomEvent) {
+        fetchNui("GiveKeys", event.detail);
+        showSelectPlayer = false;
+    }
+    
+    function CloseModal() {
+        showSelectPlayer = false;
     }
 </script>
 
@@ -90,7 +100,7 @@
                     </h2>
                     <div class="flex items-center gap-2">
                         <span class="text-gray-400 text-sm">({Object.keys($House.Keyholders ?? {}).length})</span>
-                        <button onclick={() => showAddForm = true} class="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors">
+                        <button onclick={addKeyholder} class="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors">
                             + Add
                         </button>
                     </div>
@@ -267,6 +277,10 @@
         </main>
     </div>
 </div>
+
+{#if showSelectPlayer}
+    <SelectPlayer on:submit={GiveKey} on:close={CloseModal} />
+{/if}
 
 <style>
     .hide-scrollbar::-webkit-scrollbar {
