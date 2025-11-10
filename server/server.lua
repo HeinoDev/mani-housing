@@ -1,6 +1,6 @@
-local Config = lib.load('config')
+local Config, Util = lib.load('config'), lib.load('open.sv_open')
 
-local HouseCache, KeyholderCache, PlayerCache = {}, {}, {}
+local HouseCache, PlayerCache, Initialized = {}, {}, false
 
 local HouseClass = {}
 HouseClass.__index = HouseClass
@@ -16,7 +16,8 @@ function HouseClass:New(Data)
         Decor = Data.Decor,
         SalesData = Data.SalesData,
         State = Data.State,
-        Keyholders = {}
+        Keyholders = {},
+        Inside = {}
     }, self)
 end
 
@@ -91,6 +92,8 @@ CreateThread(function()
 
     lib.print.info(('[Mani-Housing] Loaded %s Houses'):format(#Houses))
 
+    Initialized = true
+
     local WhitelistedJobs = Config.WhitelistedJobs
     Config.WhitelistedJobs = {}
 
@@ -99,20 +102,28 @@ CreateThread(function()
     end
 end)
 
-lib.callback.register('mani-housing:server:GetHouses', function() return HouseCache end)
+lib.callback.register('mani-housing:server:GetHouses', function()
+    while not Initialized do Wait(100) end
+    return HouseCache
+end)
 
-lib.callback.register('mani-housing:server:GetNearbyPlayers', function(Source, Coords)
+lib.callback.register('mani-housing:server:GetNearbyPlayers', function(Source, Coords, HouseId)
     local Players = lib.getNearbyPlayers(Coords, 7.5)
     local PlayerTable = {}
+
+    local House = HouseCache[HouseId]
+    if not House then return {} end
 
     for i = 1, #Players do
         local Player = Players[i]
         if Config.Debug or Player.id ~= Source then
             local PlayerData = exports['mani-bridge']:GetPlayerData(Player.id)
-            PlayerTable[#PlayerTable + 1] = {
-                Name = PlayerData.Character.Fullname,
-                Source = Player.id
-            }
+            if not House.Keyholders[PlayerData.Identifier] then
+                PlayerTable[#PlayerTable + 1] = {
+                    Name = PlayerData.Character.Fullname,
+                    Source = Player.id
+                }
+            end
         end
     end
 
@@ -124,21 +135,46 @@ lib.callback.register('mani-housing:server:GiveKeys', function(Source, Players, 
     if not House then return false, 'no house exist' end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return end
+    if not PlayerData then return false, 'something wrong' end
 
-    local IsOwner = House.Owner == PlayerData.Identifier
-    local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier]['GiveKeys']
-
-    if not IsOwner or HasKey then return false, 'No hablo key' end
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
 
     for i = 1, #Players do
         local PlayerSource = Players[i]
         House:AddKeyholder(PlayerSource, {
             Enter = true,
             Garage = false,
-            GiveKeys = false
+            Admin = false
         })
     end
+
+    return true
+end)
+
+lib.callback.register('mani-housing:server:UpdatePermissions', function(Source, Data)
+    local House = HouseCache[Data.HouseId]
+    if not House then return false, 'no house exist' end
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return end
+
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
+
+    House:UpdatePermissions(Data.Identifier, Data.Permissions)
+
+    return true
+end)
+
+lib.callback.register('mani-housing:server:RemoveKeyholder', function(Source, Data)
+    local House = HouseCache[Data.HouseId]
+    if not House then return false, 'no house exist' end
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return false, 'no playerdata' end
+
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
+
+    House:RemoveKeyholder(Data.Identifier)
 
     return true
 end)
@@ -158,7 +194,9 @@ lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
             Price = Data.Price,
             Salesman = PlayerData.Character.Fullname,
             SalesmanIdentifier = PlayerData.Identifier,
-            SalesmanJob = PlayerData.Job.label
+            SalesmanJob = PlayerData.Job.name,
+            SalesmanJobLabel = PlayerData.Job.label
+            
         }
     }
 
@@ -188,9 +226,56 @@ lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
     return HouseId
 end)
 
+lib.callback.register('mani-housing:server:PurchaseHouse', function(Source, HouseId)
+    local House = HouseCache[HouseId]
+    if not House then return end
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return end
+
+    if not House.State == 0 then return end
+
+    local SalesData = House.SalesData
+    local SellerJob = SalesData.SalesmanJob
+    local Price = SalesData.Price
+
+    if not exports['mani-bridge']:RemoveMoneyAuto(Source, { 'money', 'bank' }, Price) then return false, 'no hablo money' end
+
+    Util.AddMoneyForJob(SellerJob, Price)
+
+    House:SetOwner(PlayerData.Identifier)
+end)
+
+lib.callback.register('mani-housing:server:PlaceWardrobe', function(Source, Data)
+    local House = HouseCache[Data.HouseId]
+    if not House then return end
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return end
+
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
+
+    House:PlaceWardrobe(Data.PlayerCoords)
+end)
+
+lib.callback.register('mani-housing:server:EnterHouse', function(Source, HouseId)
+    if not HouseCache[HouseId] then return end
+
+    HouseCache[HouseId].Inside[Source] = true
+end)
+
+lib.callback.register('mani-housing:server:ExitHouse', function(Source, HouseId)
+    if not HouseCache[HouseId] then return end
+
+    HouseCache[HouseId].Inside[Source] = false
+end)
+
 function HouseClass:AddKeyholder(Source, Permissions)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return end
+
+    if PlayerData.Identifier == self.Owner then return end
+    if self.Keyholders[PlayerData.Identifier] then return end
 
     self.Keyholders[PlayerData.Identifier] = {
         Character = PlayerData.Character.Fullname,
@@ -202,10 +287,85 @@ function HouseClass:AddKeyholder(Source, Permissions)
 
     PlayerCache[PlayerData.Identifier].Keys[self.HouseId] = Permissions
 
-    MySQL.Async.execute('REPLACE INTO `mani_housekeys` (`identifier`, `keys`) VALUES (@identifier, @metadata)', {
+    MySQL.Async.execute('REPLACE INTO `mani_housekeys` (`identifier`, `keys`, `character`) VALUES (@identifier, @metadata, @character)', {
         ['@identifier'] = PlayerData.Identifier,
         ['@metadata'] = json.encode(PlayerCache[PlayerData.Identifier].Keys),
+        ['@character'] = PlayerData.Character.Fullname
     })
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+end
+
+function HouseClass:UpdatePermissions(Identifier, Permissions)
+    if not self.Keyholders[Identifier] then return end
+    self.Keyholders[Identifier].Permissions = Permissions
+
+    PlayerCache[Identifier] = PlayerCache[Identifier] or {}
+    PlayerCache[Identifier].Keys = PlayerCache[Identifier].Keys or {}
+
+    PlayerCache[Identifier].Keys[self.HouseId] = Permissions
+
+    MySQL.Async.execute('REPLACE INTO `mani_housekeys` (`identifier`, `keys`, `character`) VALUES (@identifier, @metadata, @character)', {
+        ['@identifier'] = Identifier,
+        ['@metadata'] = json.encode(PlayerCache[Identifier].Keys),
+        ['@character'] = PlayerCache[Identifier].Character
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+end
+
+function HouseClass:RemoveKeyholder(Identifier)
+    if not self.Keyholders[Identifier] then return end
+    self.Keyholders[Identifier] = nil
+
+    PlayerCache[Identifier] = PlayerCache[Identifier] or {}
+    PlayerCache[Identifier].Keys = PlayerCache[Identifier].Keys or {}
+
+    PlayerCache[Identifier].Keys[self.HouseId] = nil
+
+    MySQL.Async.execute('REPLACE INTO `mani_housekeys` (`identifier`, `keys`, `character`) VALUES (@identifier, @metadata, @character)', {
+        ['@identifier'] = Identifier,
+        ['@metadata'] = json.encode(PlayerCache[Identifier].Keys),
+        ['@character'] = PlayerCache[Identifier].Character
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+end
+
+function HouseClass:HasAccess(Identifier, Key)
+    local IsOwner = self.Owner == Identifier
+    local HasKey = self.Keyholders[Identifier] and self.Keyholders[Identifier].Permissions[Key or 'Enter']
+
+    return IsOwner or HasKey
+end
+
+function HouseClass:SetOwner(Identifier)
+    self.Owner = Identifier
+    self.State = 1
+
+    MySQL.update.await('UPDATE mani_houses SET owner = ?, state = 1 WHERE houseid = ?', {
+        Identifier, self.HouseId
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+end
+
+function HouseClass:PlaceWardrobe(Coords)
+    self.Coords.Wardrobe = Coords
+
+    MySQL.update.await('UPDATE mani_houses SET coords = ? WHERE houseid = ?', {
+        json.encode(self.Coords), self.HouseId
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+
+    self:RunAction(function(HouseSource)
+        TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, self.Coords.Wardrobe, 'Wardrobe')
+    end)
+end
+
+function HouseClass:RunAction(Action)
+    for Source, State in pairs(self.Inside) do
+        if State then Action(Source) end
+    end
 end

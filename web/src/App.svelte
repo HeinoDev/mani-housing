@@ -1,6 +1,7 @@
 <script lang="ts">
 	import MainMenu from "$lib/MainMenu.svelte";
 	import HouseInteraction from "$lib/InteractionMenu.svelte";
+	import HouseOffer from "$lib/HouseOffer.svelte";
 	import Guide from "$lib/components/Guide.svelte";
 	import VisibilityProvider from "$lib/providers/VisibilityProvider.svelte";
 	import { Current } from "$lib/stores/VisibilityStore";
@@ -17,5 +18,9 @@
 
 	{#if $Current == "guide"}
 		<Guide />
+	{/if}
+
+	{#if $Current == "offer"}
+		<HouseOffer />
 	{/if}
 </VisibilityProvider>

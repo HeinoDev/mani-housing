@@ -1,10 +1,10 @@
-local House = {}
+local Util = {}
 
-function House.InDistance(House) -- When the player is near a house.
+function Util.InDistance(House) -- When the player is near a house.
     
 end
 
-function House.InteractGarage(House)
+function Util.InteractGarage(House)
     if cache.vehicle then
         TriggerEvent("elevate_garage:parkVehicle", cache.vehicle, "privatHus")
     else
@@ -12,4 +12,8 @@ function House.InteractGarage(House)
     end
 end
 
-return House
+function Util.OpenWardrobe()
+    TriggerEvent('rcore_clothing:openClothingShopWithEverythingAndFree')
+end
+
+return Util

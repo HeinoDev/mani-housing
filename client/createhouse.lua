@@ -5,7 +5,7 @@ RegisterCommand(Config.Commands['RealEstate'], function()
     SendNUIMessage({
         action = "OpenRealestate"
     })
-end)
+end, false)
 
 RegisterNUICallback('CreateHouse', function(Data, cb)
     SetNuiFocus(false, false)

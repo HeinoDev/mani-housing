@@ -1,10 +1,10 @@
 local Config = lib.load('config')
 
-Wait(250)
-
 local HouseCache = lib.callback.await('mani-housing:server:GetHouses', false)
 local Util = lib.load('open.cl_open')
-local HousePoints, Models, GarageTick = {}, {}, nil
+local HousePoints, GarageTick = {}, nil
+
+local InHouse = { ShellModel = nil, Models = {}, Points = {} }
 
 lib.locale()
 
@@ -14,6 +14,14 @@ RegisterCommand(Config.Commands['HouseInteraction'], function()
     
     local House = HouseCache[HouseIndex]
     if not House then return end
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData()
+    if not PlayerData then return end
+
+    local IsOwner = House.Owner == PlayerData.Identifier
+    local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier].Permissions['Enter']
+
+    if not IsOwner and not HasKey then return end
 
     SetNuiFocus(true, true)
     SendNUIMessage({
@@ -44,6 +52,8 @@ local function ExitHouse(House)
     if not cache.inHouse then return end
     cache.inHouse = nil
 
+    lib.callback.await('mani-housing:server:ExitHouse', false, House.HouseId)
+
     local PlayerPed = cache.ped
     local EntranceCoords = vec4(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z, House.Coords.Entrance.w - 180)
     
@@ -53,11 +63,19 @@ local function ExitHouse(House)
     exports['mani-bridge']:TeleportEntity(PlayerPed, EntranceCoords)
 
     CreateThread(function()
-        for i = 1, #Models do
-            DeleteEntity(Models[i])
+        DeleteEntity(InHouse['ShellModel'])
+
+        for i = 1, #InHouse['Models'] do
+            DeleteEntity(InHouse['Models'][i])
         end
 
-        Models = {}
+        InHouse['Models'] = {}
+
+        InHouse['Points']['Exit']:remove()
+        if InHouse['Points']['Wardrobe'] then InHouse['Points']['Wardrobe']:remove() end
+        if InHouse['Points']['Stash'] then InHouse['Points']['Stash']:remove() end
+
+        InHouse['Points'] = {}
     end)
 
     Wait(500)
@@ -78,6 +96,8 @@ local function EnterHouse(Data)
 
     cache.inHouse = Data.HouseIndex
 
+    lib.callback.await('mani-housing:server:EnterHouse', false, Data.HouseIndex)
+
     local ShellCoords = vec3(HouseCoords.x, HouseCoords.y, HouseCoords.z + Config.ZOffset)
 
     local ShellModel = GetHashKey(Shell.Model)
@@ -89,33 +109,41 @@ local function EnterHouse(Data)
 
     local ShellProp = CreateObject(ShellModel, ShellCoords, false, false, false)
     FreezeEntityPosition(ShellProp, true)
-    Models[#Models + 1] = ShellProp
+    InHouse['ShellModel'] = ShellProp
 
     while not DoesEntityExist(ShellProp) do Wait(50) end
 
     local EnterCoords = vec4(ShellCoords.x + Shell.Offsets.Exit.x, ShellCoords.y + Shell.Offsets.Exit.y, ShellCoords.z + Shell.Offsets.Exit.z, Shell.Offsets.Exit.w)
+
     exports['mani-bridge']:TeleportEntity(PlayerPed, EnterCoords)
 
-    CreateThread(function()
-        while cache.inHouse do
-            local Interval = 250
+    InHouse['Points']['Exit'] = lib.points.new({
+        coords = EnterCoords,
+        distance = Config.Distances['Interact'],
+        nearby = function(self)
+            Draw3DText(EnterCoords.x, EnterCoords.y, EnterCoords.z + 0.50, 'Klik ~g~E~w~ for at gå ud')
 
-            local PlayerCoords = GetEntityCoords(PlayerPed)
-            local Distance = #(PlayerCoords - EnterCoords.xyz)
+            if IsControlJustReleased(0, 38) then
+                ExitHouse(House)
+            end
+        end
+    })
 
-            if Distance < Config.Distances['Interact'] then
-                Interval = 0
+    if House.Coords.Wardrobe then
+        House.Coords.Wardrobe = vec3(House.Coords.Wardrobe.x, House.Coords.Wardrobe.y, House.Coords.Wardrobe.z)
 
-                Draw3DText(EnterCoords.x, EnterCoords.y, EnterCoords.z + 0.50, 'Klik ~g~E~w~ for at gå ud')
+        InHouse['Points']['Wardrobe'] = lib.points.new({
+            coords = House.Coords.Wardrobe,
+            distance = Config.Distances['Interact'],
+            nearby = function(self)
+                Draw3DText(House.Coords.Wardrobe.x, House.Coords.Wardrobe.y, House.Coords.Wardrobe.z, 'Klik ~g~E~w~ for at bruge tøjskabet')
 
                 if IsControlJustReleased(0, 38) then
-                    ExitHouse(House)
+                    Util.OpenWardrobe()
                 end
             end
-
-            Wait(Interval)
-        end
-    end)
+        })
+    end
 
     Wait(500)
     DoScreenFadeIn(500)
@@ -123,11 +151,21 @@ local function EnterHouse(Data)
     SetModelAsNoLongerNeeded(ShellModel)
 end
 
+local function SeeOffer(HouseId)
+    local House = HouseCache[HouseId]
+    if not House then return end
+
+    SetNuiFocus(true, true)
+    SendNUIMessage({
+        action = "OpenHouseOffer",
+        data = House
+    })
+end
+
 CreateThread(function()
     Wait(250)
 
     for HouseIndex, House in pairs(HouseCache) do
-
         local HouseCoords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z)
 
         HousePoints[HouseIndex] = {}
@@ -136,26 +174,34 @@ CreateThread(function()
             coords = HouseCoords,
             distance = 3.0,
             onEnter = function(self)
+                House = HouseCache[House.HouseId]
+                if not House then return end
+
                 local PlayerData = exports['mani-bridge']:GetPlayerData()
-
-                local IsOwner = House.Owner == PlayerData.Identifier
-                local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier]['Enter']
-
-                if not IsOwner and not HasKey then return end
+                if not PlayerData then return end
 
                 local PlayerPed = cache.ped
                 local PlayerCoords = GetEntityCoords(PlayerPed)
                 local Distance = #(PlayerCoords - HouseCoords)
 
-                if cache.currentHouse then
-                    local CurrentHouseCoords = HouseCache[cache.currentHouse].Coords.Entrance
+                local Estate = House.State == 0
 
-                    if Distance > #(PlayerCoords - CurrentHouseCoords) then return end
+                if not Estate then
+                    local IsOwner = House.Owner == PlayerData.Identifier
+                    local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier].Permissions['Enter']
+
+                    if not IsOwner and not HasKey then return end
+
+                    if cache.currentHouse then
+                        local CurrentHouseCoords = HouseCache[cache.currentHouse].Coords.Entrance
+
+                        if Distance > #(PlayerCoords - CurrentHouseCoords) then return end
+                    end
+                    
+                    Util.InDistance(House)
                 end
 
                 cache.currentHouse = HouseIndex
-
-                Util.InDistance(House)
 
                 CreateThread(function()
                     while cache.currentHouse == HouseIndex do
@@ -166,15 +212,18 @@ CreateThread(function()
 
                         if Distance < Config.Distances['Interact'] then
                             Interval = 0
-
-                            Draw3DText(HouseCoords.x, HouseCoords.y, HouseCoords.z, 'Klik ~g~E~w~ for at gå indenfor')
+                            Draw3DText(HouseCoords.x, HouseCoords.y, HouseCoords.z, Estate and 'Klik ~g~E~w~ for at se tilbud' or 'Klik ~g~E~w~ for at gå indenfor')
 
                             if IsControlJustReleased(0, 38) then
-                                EnterHouse({
-                                    HouseIndex = HouseIndex,
-                                    HouseCoords = HouseCoords,
-                                    House = House
-                                })
+                                if Estate then
+                                    SeeOffer(HouseIndex)
+                                else
+                                    EnterHouse({
+                                        HouseIndex = HouseIndex,
+                                        HouseCoords = HouseCoords,
+                                        House = House
+                                    })
+                                end
                             end
                         end
                         
@@ -188,22 +237,20 @@ CreateThread(function()
         })
 
         if House.Coords.Garage then
-
             local GarageCoords = vec3(House.Coords.Garage.x, House.Coords.Garage.y, House.Coords.Garage.z)
 
             HousePoints[HouseIndex]['Garage'] = lib.points.new({
                 coords = GarageCoords,
                 distance = Config.Distances['Interact'],
                 onEnter = function(self)
+                    House = HouseCache[House.HouseId]
                     local PlayerData = exports['mani-bridge']:GetPlayerData()
+                    if not PlayerData then return end
 
                     local IsOwner = House.Owner == PlayerData.Identifier
-                    local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier]['Garage']
+                    local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier].Permissions['Garage']
 
                     if not IsOwner and not HasKey then return end
-
-                    local PlayerPed = cache.ped
-                    local PlayerCoords = GetEntityCoords(PlayerPed)
 
                     GarageTick = SetInterval(function()
                         Draw3DText(GarageCoords.x, GarageCoords.y, GarageCoords.z, 'Klik ~g~E~w~ for at bruge garagen')
@@ -237,10 +284,20 @@ CreateThread(function()
     })
 end)
 
+RegisterNUICallback('GiveKeys', function(Players, cb)
+    local HouseId = cache.currentHouse or cache.inHouse
+    if not HouseId then return end
+    local Success, Message = lib.callback.await('mani-housing:server:GiveKeys', false, Players, HouseId)
+    cb({
+        Success = Success,
+        Keyholders = HouseCache[HouseId].Keyholders
+    })
+end)
+
 RegisterNetEvent('mani-housing:client:UpdateHouse', function(House, Action)
     if Action == 'Update' then
         HouseCache[House.HouseId] = House
-        print(json.encode(House, { indent = true }))
+        -- print(json.encode(House, { indent = true }))
     elseif Action == 'Create' then
         HouseCache[House.HouseId] = House
         -- Lav creation point
@@ -248,4 +305,29 @@ RegisterNetEvent('mani-housing:client:UpdateHouse', function(House, Action)
         HouseCache[House.HouseId] = nil
         -- Fjern point
     end
+end)
+
+RegisterNetEvent('mani-housing:client:UpdatePoint', function(Coords, Point)
+    if not cache.inHouse then return end
+
+    if InHouse['Points'][Point] then InHouse['Points'][Point]:remove() end
+
+    local IsWardrobe = Point == 'Wardrobe'
+    local IsStash = Point == 'Stash'
+
+    InHouse['Points'][Point] = lib.points.new({
+        coords = Coords,
+        distance = Config.Distances['Interact'],
+        nearby = function(self)
+            Draw3DText(Coords.x, Coords.y, Coords.z, IsWardrobe and 'Klik ~g~E~w~ for at bruge tøjskabet' or 'Klik ~g~E~w~ for at åbne stashet')
+
+            if IsControlJustReleased(0, 38) then
+                if IsWardrobe then
+                    Util.OpenWardrobe()
+                else
+
+                end
+            end
+        end
+    })
 end)

@@ -27,6 +27,12 @@
 		House.set(Data);
 	});
 
+	useNuiEvent("OpenHouseOffer", (Data: any) => {
+		visibility.show();
+		Current.set("offer");
+		House.set(Data);
+	});
+
 	useNuiEvent("HideUI", () => {
 		visibility.hide();
 	});

@@ -4,13 +4,34 @@ RegisterNUICallback('HideUI', function(_, cb)
 end)
 
 RegisterNUICallback('GetNearbyPlayers', function(_, cb)
-    local Players = lib.callback.await('mani-housing:server:GetNearbyPlayers', false, GetEntityCoords(cache.ped))
+    local Players = lib.callback.await('mani-housing:server:GetNearbyPlayers', false, GetEntityCoords(cache.ped), cache.currentHouse or cache.inHouse)
     cb(Players)
 end)
 
-RegisterNUICallback('GiveKeys', function(Players, cb)
-    local HouseId = cache.currentHouse or cache
-    if not HouseId then return end
-    local success, error = lib.callback.await('mani-housing:server:GiveKeys', false, Players, HouseId)
+RegisterNUICallback('UpdateKeyPermissions', function(Data, cb)
+    local Sucess, Message = lib.callback.await('mani-housing:server:UpdatePermissions', false, Data)
+    cb({})
+end)
+
+RegisterNUICallback('RemoveKeyholder', function(Data, cb)
+    local Sucess, Message = lib.callback.await('mani-housing:server:RemoveKeyholder', false, Data)
+    cb({
+        Success = Sucess
+    })
+end)
+
+RegisterNUICallback('PurchaseHouse', function(HouseId, cb)
+    local Sucess, Message = lib.callback.await('mani-housing:server:PurchaseHouse', false, HouseId)
+    SetNuiFocus(false, false)
+    cb({})
+end)
+
+RegisterNUICallback('PlaceWardrobe', function(HouseId, cb)
+    if not cache.inHouse then return end
+    local Sucess, Message = lib.callback.await('mani-housing:server:PlaceWardrobe', false, {
+        HouseId = HouseId,
+        PlayerCoords = GetEntityCoords(cache.ped)
+    })
+    SetNuiFocus(false, false)
     cb({})
 end)
