@@ -179,6 +179,8 @@ local function SeeOffer(HouseId)
 end
 
 local function CreateHouse(HouseIndex, House)
+    print(json.encode(House, { indent = true }))
+
     local HouseCoords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z)
 
     HousePoints[HouseIndex] = HousePoints[HouseIndex] or {}
@@ -191,59 +193,53 @@ local function CreateHouse(HouseIndex, House)
             House = HouseCache[House.HouseId]
             if not House then return end
 
-            local PlayerData = exports['mani-bridge']:GetPlayerData()
-            if not PlayerData then return end
+            self.PlayerData = exports['mani-bridge']:GetPlayerData()
+            if not self.PlayerData then return end
 
-            local PlayerPed = cache.ped
+            self.PlayerPed = cache.ped
             local PlayerCoords = GetEntityCoords(PlayerPed)
             local Distance = #(PlayerCoords - HouseCoords)
 
-            local Estate = House.State == 0
+            self.Estate = House.State == 0
 
-            if not Estate then
-                local IsOwner = House.Owner == PlayerData.Identifier
-                local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier].Permissions['Enter']
+            if not self.Estate then
+                local IsOwner = House.Owner == self.PlayerData.Identifier
+                local HasKey = House.Keyholders[self.PlayerData.Identifier] and House.Keyholders[self.PlayerData.Identifier].Permissions['Enter']
 
                 if not IsOwner and not HasKey then return end
 
                 if cache.currentHouse then
                     local CurrentHouseCoords = HouseCache[cache.currentHouse].Coords.Entrance
 
-                    if Distance > #(PlayerCoords - CurrentHouseCoords) then return end
+                    if Distance > #(PlayerCoords - CurrentHouseCoords.xyz) then return end
                 end
                 
                 Util.InDistance(House)
+                
+                cache.currentHouse = HouseIndex
             end
+        end,
+        nearby = function(self)
+            if not self.Estate and cache.currentHouse ~= HouseIndex then return end
 
-            cache.currentHouse = HouseIndex
+            local PlayerCoords = GetEntityCoords(self.PlayerPed)
+            local Distance = #(PlayerCoords - HouseCoords)
 
-            CreateThread(function()
-                while cache.currentHouse == HouseIndex do
-                    local Interval = 250
+            if Distance < Config.Distances['Interact'] then
+                Draw3DText(HouseCoords.x, HouseCoords.y, HouseCoords.z, self.Estate and 'Klik ~g~E~w~ for at se tilbud' or 'Klik ~g~E~w~ for at gå indenfor')
 
-                    PlayerCoords = GetEntityCoords(PlayerPed)
-                    Distance = #(PlayerCoords - HouseCoords)
-
-                    if Distance < Config.Distances['Interact'] then
-                        Interval = 0
-                        Draw3DText(HouseCoords.x, HouseCoords.y, HouseCoords.z, Estate and 'Klik ~g~E~w~ for at se tilbud' or 'Klik ~g~E~w~ for at gå indenfor')
-
-                        if IsControlJustReleased(0, 38) then
-                            if Estate then
-                                SeeOffer(HouseIndex)
-                            else
-                                EnterHouse({
-                                    HouseIndex = HouseIndex,
-                                    HouseCoords = HouseCoords,
-                                    House = House
-                                })
-                            end
-                        end
+                if IsControlJustReleased(0, 38) then
+                    if self.Estate then
+                        SeeOffer(HouseIndex)
+                    else
+                        EnterHouse({
+                            HouseIndex = HouseIndex,
+                            HouseCoords = HouseCoords,
+                            House = House
+                        })
                     end
-                    
-                    Wait(Interval)
                 end
-            end)
+            end
         end,
         onExit = function(self)
             if cache.currentHouse == HouseIndex then cache.currentHouse = nil end
@@ -265,18 +261,16 @@ local function CreateHouse(HouseIndex, House)
                 local IsOwner = House.Owner == PlayerData.Identifier
                 local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier].Permissions['Garage']
 
-                if not IsOwner and not HasKey then return end
-
-                GarageTick = SetInterval(function()
-                    Draw3DText(GarageCoords.x, GarageCoords.y, GarageCoords.z, 'Klik ~g~E~w~ for at bruge garagen')
-
-                        if IsControlJustReleased(0, 38) then
-                            Util.InteractGarage(House)
-                        end
-                end, 0)
+                self.HasAcess = IsOwner or HasKey
             end,
-            onExit = function(self)
-                if GarageTick then GarageTick = ClearInterval(GarageTick) end
+            nearby = function(self)
+                if not self.HasAcess then return end
+
+                Draw3DText(GarageCoords.x, GarageCoords.y, GarageCoords.z, 'Klik ~g~E~w~ for at bruge garagen')
+
+                if IsControlJustReleased(0, 38) then
+                    Util.InteractGarage(House)
+                end
             end
         })
     end
