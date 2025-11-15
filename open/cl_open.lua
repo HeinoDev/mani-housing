@@ -16,4 +16,8 @@ function Util.OpenWardrobe()
     TriggerEvent('rcore_clothing:openClothingShopWithEverythingAndFree')
 end
 
+function Util.OpenStash()
+
+end
+
 return Util

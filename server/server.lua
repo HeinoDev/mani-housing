@@ -145,8 +145,10 @@ lib.callback.register('mani-housing:server:GiveKeys', function(Source, Players, 
             Enter = true,
             Garage = false,
             Admin = false
-        })
+        }, true)
     end
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[HouseId], 'Update')
 
     return true
 end)
@@ -258,6 +260,18 @@ lib.callback.register('mani-housing:server:PlaceWardrobe', function(Source, Data
     House:PlaceWardrobe(Data.PlayerCoords)
 end)
 
+lib.callback.register('mani-housing:server:PlaceStash', function(Source, Data)
+    local House = HouseCache[Data.HouseId]
+    if not House then return end
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return end
+
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
+
+    House:PlaceStash(Data.PlayerCoords)
+end)
+
 lib.callback.register('mani-housing:server:EnterHouse', function(Source, HouseId)
     if not HouseCache[HouseId] then return end
 
@@ -270,7 +284,7 @@ lib.callback.register('mani-housing:server:ExitHouse', function(Source, HouseId)
     HouseCache[HouseId].Inside[Source] = false
 end)
 
-function HouseClass:AddKeyholder(Source, Permissions)
+function HouseClass:AddKeyholder(Source, Permissions, IgnoreClient)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return end
 
@@ -293,7 +307,7 @@ function HouseClass:AddKeyholder(Source, Permissions)
         ['@character'] = PlayerData.Character.Fullname
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+    if not IgnoreClient then TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update') end
 end
 
 function HouseClass:UpdatePermissions(Identifier, Permissions)
@@ -361,6 +375,20 @@ function HouseClass:PlaceWardrobe(Coords)
 
     self:RunAction(function(HouseSource)
         TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, self.Coords.Wardrobe, 'Wardrobe')
+    end)
+end
+
+function HouseClass:PlaceStash(Coords)
+    self.Coords.Stash = Coords
+
+    MySQL.update.await('UPDATE mani_houses SET coords = ? WHERE houseid = ?', {
+        json.encode(self.Coords), self.HouseId
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+
+    self:RunAction(function(HouseSource)
+        TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, self.Coords.Wardrobe, 'Stash')
     end)
 end
 

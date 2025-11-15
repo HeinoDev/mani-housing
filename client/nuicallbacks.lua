@@ -26,9 +26,21 @@ RegisterNUICallback('PurchaseHouse', function(HouseId, cb)
     cb({})
 end)
 
-RegisterNUICallback('PlaceWardrobe', function(HouseId, cb)
-    if not cache.inHouse then return end
+RegisterNUICallback('PlaceWardrobe', function(_, cb)
+    local HouseId = cache.inHouse
+    if not HouseId then return end
     local Sucess, Message = lib.callback.await('mani-housing:server:PlaceWardrobe', false, {
+        HouseId = HouseId,
+        PlayerCoords = GetEntityCoords(cache.ped)
+    })
+    SetNuiFocus(false, false)
+    cb({})
+end)
+
+RegisterNUICallback('PlaceStash', function(HouseId, cb)
+    local HouseId = cache.inHouse
+    if not HouseId then return end
+    local Sucess, Message = lib.callback.await('mani-housing:server:PlaceStash', false, {
         HouseId = HouseId,
         PlayerCoords = GetEntityCoords(cache.ped)
     })

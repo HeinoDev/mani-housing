@@ -58,13 +58,13 @@
     }
 
     function placeWardrobe() {
-        fetchNui("PlaceWardrobe", $House.HouseId);
+        fetchNui("PlaceWardrobe");
         visibility.hide();
     }
 
     function placeStash() {
-        // fetchNui("PlaceStash", { houseId: $House.HouseId });
-        // visibility.hide();
+        fetchNui("PlaceStash");
+        visibility.hide();
     }
 
     function CloseUI() {
