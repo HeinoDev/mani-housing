@@ -16,8 +16,13 @@ function Util.OpenWardrobe()
     TriggerEvent('rcore_clothing:openClothingShopWithEverythingAndFree')
 end
 
-function Util.OpenStash()
-
+function Util.OpenStash(House)
+    if not exports['mani-bridge']:OpenInventory('stash', ('housestash_%s'):format(House.HouseId)) then
+        local Success = lib.callback.await('mani-housing:server:RegisterStash', false, House.HouseId)
+        if Success then
+            exports['mani-bridge']:OpenInventory('stash', ('housestash_%s'):format(House.HouseId))
+        end
+    end
 end
 
-return Util
+return Util 

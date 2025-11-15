@@ -155,7 +155,7 @@ local function EnterHouse(Data)
                 Draw3DText(House.Coords.Stash.x, House.Coords.Stash.y, House.Coords.Stash.z, 'Klik ~g~E~w~ for at åbne stash')
 
                 if IsControlJustReleased(0, 38) then
-                    Util.OpenStash()
+                    Util.OpenStash(House)
                 end
             end
         })
@@ -179,8 +179,6 @@ local function SeeOffer(HouseId)
 end
 
 local function CreateHouse(HouseIndex, House)
-    print(json.encode(House, { indent = true }))
-
     local HouseCoords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z)
 
     HousePoints[HouseIndex] = HousePoints[HouseIndex] or {}
@@ -340,6 +338,8 @@ RegisterNetEvent('mani-housing:client:UpdatePoint', function(Coords, Point)
 
     local IsWardrobe = Point == 'Wardrobe'
     local IsStash = Point == 'Stash'
+
+    print('dinmor')
 
     InHouse['Points'][Point] = lib.points.new({
         coords = Coords,

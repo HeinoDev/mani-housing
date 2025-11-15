@@ -13,7 +13,7 @@ Config.Commands = {
 
 Config.Distances = {
 	['Main'] = 7.5, -- When the player can use house interactions.
-	['Interact'] = 1.5 -- When the player can enter and use the garage.
+	['Interact'] = 0.75 -- When the player can enter and use the garage.
 }
 
 Config.ZOffset = 1000 -- How high the player should be when they enter the house. (Set to -Number if you want to lower the player)
@@ -23,7 +23,7 @@ Config.Shells = {
 		Model = 'shell_garagem',
         Label = 'Medium Garage',
 		Stash = {
-			MaxWeight = 1000000,
+			Weight = 1000000,
 			Slots = 100
 		}
 	},
@@ -31,7 +31,7 @@ Config.Shells = {
 		Model = 'shell_trailer',
         Label = 'Trailer',
 		Stash = {
-			MaxWeight = 1000000,
+			Weight = 1000000,
 			Slots = 100
 		}
 	},
@@ -39,7 +39,7 @@ Config.Shells = {
 		Model = 'shell_warehouse1',
         Label = 'Warehouse',
 		Stash = {
-			MaxWeight = 1000000,
+			Weight = 1000000,
 			Slots = 100
 		}
 	},
@@ -47,7 +47,7 @@ Config.Shells = {
 		Model = 'standardmotel_shell',
         Label = 'Standard Motel',
 		Stash = {
-			MaxWeight = 1000000,
+			Weight = 1000000,
 			Slots = 100
 		},
 		Offsets = {
@@ -58,7 +58,7 @@ Config.Shells = {
 		Model = 'container_shell',
         Label = 'Container',
 		Stash = {
-			MaxWeight = 1000000,
+			Weight = 1000000,
 			Slots = 100
 		}
 	},
@@ -66,7 +66,7 @@ Config.Shells = {
 		Model = 'shell_store1',
         Label = 'Store',
 		Stash = {
-			MaxWeight = 1000000,
+			Weight = 1000000,
 			Slots = 100
 		}
 	},
@@ -74,7 +74,7 @@ Config.Shells = {
 		Model = 'furnitured_midapart',
         Label = 'Mid Apartment',
 		Stash = {
-			MaxWeight = 1000000,
+			Weight = 1000000,
 			Slots = 100
 		}
 	},

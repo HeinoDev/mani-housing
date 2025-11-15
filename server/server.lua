@@ -100,6 +100,13 @@ CreateThread(function()
     for _, Job in ipairs(WhitelistedJobs) do
         Config.WhitelistedJobs[Job] = true
     end
+
+    Config.ShellIndexes = {}
+
+    for i = 1, #Config.Shells do
+        local Shell = Config.Shells[i]
+        Config.ShellIndexes[Shell.Model] = i
+    end
 end)
 
 lib.callback.register('mani-housing:server:GetHouses', function()
@@ -144,6 +151,7 @@ lib.callback.register('mani-housing:server:GiveKeys', function(Source, Players, 
         House:AddKeyholder(PlayerSource, {
             Enter = true,
             Garage = false,
+            Stash = false,
             Admin = false
         }, true)
     end
@@ -272,6 +280,24 @@ lib.callback.register('mani-housing:server:PlaceStash', function(Source, Data)
     House:PlaceStash(Data.PlayerCoords)
 end)
 
+lib.callback.register('mani-housing:server:RegisterStash', function(Source, HouseId)
+    local House = HouseCache[HouseId]
+    if not House then return false, 'du dum' end
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return false, 'ewor' end
+
+    if not House:HasAccess(PlayerData.Identifier, 'Stash') then return false, 'no access' end
+
+    local ShellIndex = Config.ShellIndexes[House.Shell]
+    if not ShellIndex then return false, 'Shell not exist' end
+    local Shell = Config.Shells[ShellIndex]
+
+    exports['mani-bridge']:RegisterStash(('housestash_%s'):format(House.HouseId), 'House Stash', Shell.Stash.Slots, Shell.Stash.Weight)
+
+    return true
+end)
+
 lib.callback.register('mani-housing:server:EnterHouse', function(Source, HouseId)
     if not HouseCache[HouseId] then return end
 
@@ -388,7 +414,7 @@ function HouseClass:PlaceStash(Coords)
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 
     self:RunAction(function(HouseSource)
-        TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, self.Coords.Wardrobe, 'Stash')
+        TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, self.Coords.Stash, 'Stash')
     end)
 end
 
