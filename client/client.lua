@@ -361,8 +361,6 @@ RegisterNetEvent('mani-housing:client:UpdatePoint', function(Coords, Point)
     local IsWardrobe = Point == 'Wardrobe'
     local IsStash = Point == 'Stash'
 
-    print('dinmor')
-
     InHouse['Points'][Point] = lib.points.new({
         coords = Coords,
         distance = Config.Distances['Interact'],

@@ -311,6 +311,37 @@ lib.callback.register('mani-housing:server:ExitHouse', function(Source, HouseId)
     HouseCache[HouseId].Inside[Source] = false
 end)
 
+lib.callback.register('mani-housing:server:UpdateGarage', function(Source, Data)
+    local HouseId = Data.HouseId
+    local Coords = Data.Coords
+
+    if not HouseId or not Coords then return false, 'ewor' end
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return false, 'no playerdata' end
+    -- if not Config.WhitelistedJobs[PlayerData.Job.name] then return false, 'Error No ablo job' end
+
+    local House = HouseCache[HouseId]
+    if not House then return end
+
+    House:SetGarage(Coords)
+
+    return true
+end)
+
+lib.callback.register('mani-housing:server:RemoveHouse', function(Source, HouseId)
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return false, 'no playerdata' end
+    -- if not Config.WhitelistedJobs[PlayerData.Job.name] then return false, 'Error No ablo job' end
+
+    local House = HouseCache[HouseId]
+    if not House then return end
+
+    House:Remove()
+
+    return true
+end)
+
 function HouseClass:AddKeyholder(Source, Permissions, IgnoreClient)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return end
@@ -355,7 +386,7 @@ function HouseClass:UpdatePermissions(Identifier, Permissions)
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
-function HouseClass:RemoveKeyholder(Identifier)
+function HouseClass:RemoveKeyholder(Identifier, IgnoreClient)
     if not self.Keyholders[Identifier] then return end
     self.Keyholders[Identifier] = nil
 
@@ -370,7 +401,7 @@ function HouseClass:RemoveKeyholder(Identifier)
         ['@character'] = PlayerCache[Identifier].Character
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+    if not IgnoreClient then TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update') end
 end
 
 function HouseClass:HasAccess(Identifier, Key)
@@ -418,6 +449,42 @@ function HouseClass:PlaceStash(Coords)
     self:RunAction(function(HouseSource)
         TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, self.Coords.Stash, 'Stash')
     end)
+end
+
+function HouseClass:SetGarage(Coords)
+    self.Coords.Garage = Coords
+
+    MySQL.update.await('UPDATE mani_houses SET coords = ? WHERE houseid = ?', {
+        json.encode(self.Coords), self.HouseId
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+end
+
+function HouseClass:Remove()
+    MySQL.query.await('DELETE FROM mani_houses WHERE houseid = ?', {
+        self.HouseId
+    })
+
+    for Identifier, Data in pairs(self.Keyholders) do
+        self:RemoveKeyholder(Identifier, true)
+    end
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Remove')
+
+    self = nil
+end
+
+function HouseClass:SetState(State)
+    if type(State) ~= 'number' then return end
+
+    self.State = State
+
+    MySQL.update.await('UPDATE mani_houses SET state = ? WHERE houseid = ?', {
+        self.State, self.HouseId
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
 function HouseClass:RunAction(Action)

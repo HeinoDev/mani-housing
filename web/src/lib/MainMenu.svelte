@@ -3,11 +3,15 @@
     import { fetchNui } from "$lib/utils/fetchNui";
     import CreateModal from "./components/CreateModal.svelte";
     import EditModal from "./components/EditModal.svelte";
+    import Confirm from "./components/Confirm.svelte";
     let showCreateModal = false;
     let showEditModal = false;
+    let showConfirm = false;
     let selectedHouseId = null;
     let searchTerm = '';
+    let onlyInactive = false;
     $: filteredHouses = Object.values($Houses || {}).filter(house => {
+        if (onlyInactive && house.State == 1) return false;
         const label = `${house.Coords.Zone}: ${house.HouseId}`;
         const owner = house.SalesData.OwnerName || '';
         return label.toLowerCase().includes(searchTerm.toLowerCase()) || owner.toLowerCase().includes(searchTerm.toLowerCase());
@@ -39,7 +43,23 @@
 
     function CloseEditModal() {
         showEditModal = false;
-        selectedHouseId = null;
+    }
+
+    function ViewLocation(houseId: number) {
+        fetchNui("ViewLocation", { id: houseId });
+    }
+
+    function RemoveHouse() {
+        CloseEditModal();
+        showConfirm = true;
+    }
+
+    function handleConfirm(e) {
+        showConfirm = false;
+        if (e.detail) {
+            fetchNui("RemoveHouse", selectedHouseId);
+            visibility.hide();
+        }
     }
 </script>
 
@@ -64,9 +84,27 @@
                 <div class="flex-1 flex justify-center px-4">
                     <input bind:value={searchTerm} placeholder="Search houses..." class="bg-[#333333] text-white px-3 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 w-full max-w-md" />
                 </div>
-                <button onclick={CreateHouse} class="bg-blue-400 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-blue-500 transition-colors ml-auto">
-                    Create House
-                </button>
+                <div class="flex items-center gap-4 ml-auto">
+                    <div class="flex items-center gap-2">
+                        <div class="relative flex items-center">
+                            <input type="checkbox" bind:checked={onlyInactive} id="inactive" class="sr-only peer">
+                            <label for="inactive" class="relative flex items-center cursor-pointer">
+                                <div class="w-5 h-5 bg-[#1e1e1e] border-2 border-[#333333] rounded peer-checked:bg-blue-400 peer-focus:ring-2 peer-focus:ring-blue-400 transition-all duration-200 peer-checked:border-blue-400"></div>
+                                <div class="absolute inset-0 w-5 h-5 flex items-center justify-center pointer-events-none">
+                                    {#if onlyInactive}
+                                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    {/if}
+                                </div>
+                            </label>
+                        </div>
+                        <span class="text-xs text-gray-400">Only Inactive</span>
+                    </div>
+                    <button onclick={CreateHouse} class="bg-blue-400 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-blue-500 transition-colors">
+                        Create House
+                    </button>
+                </div>
             </div>
         </div>
         <div class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4">
@@ -118,7 +156,11 @@
 {/if}
 
 {#if showEditModal}
-    <EditModal houseId={selectedHouseId} on:close={CloseEditModal} />
+    <EditModal houseId={selectedHouseId} on:close={CloseEditModal} on:remove={RemoveHouse} />
+{/if}
+
+{#if showConfirm}
+    <Confirm on:confirm={handleConfirm} message="Are you sure you want to remove this house?" />
 {/if}
 
 <style>
