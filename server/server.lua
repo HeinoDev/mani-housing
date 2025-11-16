@@ -82,11 +82,13 @@ CreateThread(function()
         PlayerCache[Keyholder.identifier].Keys = PlayerCache[Keyholder.identifier].Keys or {}
 
         for HouseId, Data in pairs(Keys) do
-            PlayerCache[Keyholder.identifier].Keys[HouseId] = Data
-            HouseCache[HouseId].Keyholders[Keyholder.identifier] = {
-                Character = Keyholder.character,
-                Permissions = Data
-            }
+            if HouseCache[HouseId] then
+                PlayerCache[Keyholder.identifier].Keys[HouseId] = Data
+                HouseCache[HouseId].Keyholders[Keyholder.identifier] = {
+                    Character = Keyholder.character,
+                    Permissions = Data
+                }
+            end
         end
     end
 
@@ -205,8 +207,7 @@ lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
             Salesman = PlayerData.Character.Fullname,
             SalesmanIdentifier = PlayerData.Identifier,
             SalesmanJob = PlayerData.Job.name,
-            SalesmanJobLabel = PlayerData.Job.label
-            
+            SalesmanJobLabel = PlayerData.Job.label,
         }
     }
 
@@ -253,7 +254,7 @@ lib.callback.register('mani-housing:server:PurchaseHouse', function(Source, Hous
 
     Util.AddMoneyForJob(SellerJob, Price)
 
-    House:SetOwner(PlayerData.Identifier)
+    House:SetOwner(PlayerData)
 end)
 
 lib.callback.register('mani-housing:server:PlaceWardrobe', function(Source, Data)
@@ -379,12 +380,13 @@ function HouseClass:HasAccess(Identifier, Key)
     return IsOwner or HasKey
 end
 
-function HouseClass:SetOwner(Identifier)
-    self.Owner = Identifier
+function HouseClass:SetOwner(PlayerData)
+    self.Owner = PlayerData.Identifier
+    self.SalesData.OwnerName = PlayerData.Character.Fullname
     self.State = 1
 
-    MySQL.update.await('UPDATE mani_houses SET owner = ?, state = 1 WHERE houseid = ?', {
-        Identifier, self.HouseId
+    MySQL.update.await('UPDATE mani_houses SET owner = ?, salesdata = ?, state = 1 WHERE houseid = ?', {
+        self.Owner, json.encode(self.SalesData), self.HouseId
     })
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')

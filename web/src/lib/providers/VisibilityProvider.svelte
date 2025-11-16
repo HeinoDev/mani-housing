@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { visibilityStore as visibility, Config, Current, House } from "$lib/stores/VisibilityStore";
+	import { visibilityStore as visibility, Config, Current, House, Houses } from "$lib/stores/VisibilityStore";
 	import { useNuiEvent } from "$lib/hooks/useNuiEvent";
 	import { fetchNui } from "$lib/utils/fetchNui";
 
@@ -16,8 +16,9 @@
 		return () => window.removeEventListener("keydown", keyHandler);
 	});
 
-	useNuiEvent("OpenRealestate", () => {
+	useNuiEvent("OpenRealestate", (Data: any) => {
 		visibility.show();
+		Houses.set(Data);
 		Current.set("main");
 	});
 

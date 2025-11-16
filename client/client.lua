@@ -299,6 +299,28 @@ CreateThread(function()
     })
 end)
 
+RegisterCommand(Config.Commands['RealEstate'], function()
+    SetNuiFocus(true, true)
+    SendNUIMessage({
+        action = "OpenRealestate",
+        data = HouseCache
+    })
+end, false)
+
+RegisterNUICallback('ViewLocation', function(HouseId, cb)
+    print('dinmor')
+    print(HouseId)
+
+    SetNuiFocus(false, false)
+
+    local House = HouseCache[HouseId]
+    if not House then return end
+
+    SetNewWaypoint(House.Coords.Entrance.x, House.Coords.Entrance.y)
+
+    cb({})
+end)
+
 RegisterNUICallback('GiveKeys', function(Players, cb)
     local HouseId = cache.currentHouse or cache.inHouse
     if not HouseId then return end
