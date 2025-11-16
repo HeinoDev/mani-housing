@@ -98,3 +98,13 @@ RegisterNUICallback('RemoveHouse', function(HouseId, cb)
 
     cb({})
 end)
+
+RegisterNUICallback('SellHouse', function(Data, cb)
+    SetNuiFocus(false, false)
+
+    local success, error = lib.callback.await('mani-housing:server:SellHouse', false, Data)
+
+    -- notify
+
+    cb({})
+end)

@@ -4,9 +4,11 @@
     import CreateModal from "./components/CreateModal.svelte";
     import EditModal from "./components/EditModal.svelte";
     import Confirm from "./components/Confirm.svelte";
+    import Input from "./components/Input.svelte";
     let showCreateModal = false;
     let showEditModal = false;
     let showConfirm = false;
+    let showInput = false;
     let selectedHouseId = null;
     let searchTerm = '';
     let onlyInactive = false;
@@ -58,6 +60,22 @@
         showConfirm = false;
         if (e.detail) {
             fetchNui("RemoveHouse", selectedHouseId);
+            visibility.hide();
+        }
+    }
+
+    function SellHouse() {
+        showEditModal = false;
+        showInput = true;
+    }
+
+    function handleSell(e) {
+        showInput = false;
+        if (e.type == "confirm") {
+            fetchNui("SellHouse", {
+                HouseId: selectedHouseId,
+                Price: e.detail
+            });
             visibility.hide();
         }
     }
@@ -156,11 +174,15 @@
 {/if}
 
 {#if showEditModal}
-    <EditModal houseId={selectedHouseId} on:close={CloseEditModal} on:remove={RemoveHouse} />
+    <EditModal houseId={selectedHouseId} on:close={CloseEditModal} on:remove={RemoveHouse} on:sell={SellHouse} />
 {/if}
 
 {#if showConfirm}
     <Confirm on:confirm={handleConfirm} message="Are you sure you want to remove this house?" />
+{/if}
+
+{#if showInput}
+    <Input on:confirm={handleSell} />
 {/if}
 
 <style>

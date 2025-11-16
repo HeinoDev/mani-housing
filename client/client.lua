@@ -291,7 +291,7 @@ CreateThread(function()
         Config.ShellIndexes[Shell.Model] = i
     end
 
-    Wait(200)
+    Wait(400)
 
     SendNUIMessage({
         action = "InitializeUI",

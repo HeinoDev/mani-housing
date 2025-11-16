@@ -241,10 +241,10 @@ lib.callback.register('mani-housing:server:PurchaseHouse', function(Source, Hous
     local House = HouseCache[HouseId]
     if not House then return end
 
+    if House.State ~= 0 then return end
+
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return end
-
-    if not House.State == 0 then return end
 
     local SalesData = House.SalesData
     local SellerJob = SalesData.SalesmanJob
@@ -252,7 +252,11 @@ lib.callback.register('mani-housing:server:PurchaseHouse', function(Source, Hous
 
     if not exports['mani-bridge']:RemoveMoneyAuto(Source, { 'money', 'bank' }, Price) then return false, 'no hablo money' end
 
-    Util.AddMoneyForJob(SellerJob, Price)
+    if House.Owner ~= '' then
+        exports['mani-bridge']:AddMoneyOffline(House.Owner, 'bank', Price)
+    else
+        Util.AddMoneyForJob(SellerJob, Price)
+    end
 
     House:SetOwner(PlayerData)
 end)
@@ -338,6 +342,20 @@ lib.callback.register('mani-housing:server:RemoveHouse', function(Source, HouseI
     if not House then return end
 
     House:Remove()
+
+    return true
+end)
+
+lib.callback.register('mani-housing:server:SellHouse', function(Source, Data)
+    local HouseId = Data.HouseId
+    local Price = Data.Price
+
+    if not HouseId or not Price then return false, 'ewor' end
+
+    local House = HouseCache[HouseId]
+    if not House then return false, 'no hablo house' end
+
+    House:Sell(Price)
 
     return true
 end)
@@ -482,6 +500,23 @@ function HouseClass:SetState(State)
 
     MySQL.update.await('UPDATE mani_houses SET state = ? WHERE houseid = ?', {
         self.State, self.HouseId
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+end
+
+function HouseClass:Sell(Price)
+    if type(Price) ~= 'number' then return end
+
+    self.State = 0
+    self.SalesData.Price = Price
+
+    for Identifier, Data in pairs(self.Keyholders) do
+        self:RemoveKeyholder(Identifier, true)
+    end
+
+    MySQL.update.await('UPDATE mani_houses SET state = ?, salesdata = ?, WHERE houseid = ?', {
+        self.State, self.SalesData, self.HouseId
     })
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')

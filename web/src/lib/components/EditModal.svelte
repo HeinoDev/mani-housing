@@ -18,8 +18,7 @@
     }
 
     function HandleSellProperty() {
-        // fetchNui("SellProperty", { id: houseId });
-        CloseEditModal();
+        dispatch('sell', houseId)
     }
 
     function HandleRemoveProperty() {
