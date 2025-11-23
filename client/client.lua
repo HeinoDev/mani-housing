@@ -297,6 +297,10 @@ CreateThread(function()
         action = "InitializeUI",
         data = Config
     })
+
+    if Config.Debug then
+        SetNuiFocus(true, true)
+    end
 end)
 
 RegisterCommand(Config.Commands['RealEstate'], function()

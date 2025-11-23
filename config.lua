@@ -80,4 +80,158 @@ Config.Shells = {
 	},
 }
 
+Config.FreeFurnitue = true
+
+Config.Furniture = {
+	['Walls'] = {
+		{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+				{
+			Model = 'prop_wall1',
+			Label = 'Dusty Wall',
+			Price = 100,
+		},
+		{
+			Model = 'prop_wall2',
+			Label = 'Modern Wall',
+			Price = 100,
+		},
+	},
+	['Doors'] = {
+		{
+			Model = 'prop_door',
+			Label = 'Dusty Door',
+			Price = 100,
+		},
+		{
+			Model = 'prop_door2',
+			Label = 'Modern Door',
+			Price = 100,
+		}
+	}
+}
+
 return Config
