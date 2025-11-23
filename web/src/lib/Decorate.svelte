@@ -1,8 +1,13 @@
 <script lang="ts">
     import { Config } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
+    import { onMount, onDestroy, afterUpdate, tick } from 'svelte';
     let selectedCategory = Object.keys($Config?.Furniture || {})[0] || '';
     let searchTerm = '';
+    let scrollContainer: HTMLDivElement;
+    let currentScroll = 0;
+    let targetScroll = 0;
+    let rafId: number | null = null;
     $: categories = Object.keys($Config?.Furniture || {}).sort();  // Alphabetical order
     $: furniture = $Config?.Furniture[selectedCategory] || [];
     $: allFurniture = Object.entries($Config?.Furniture || {}).flatMap(([cat, items]) =>
@@ -19,6 +24,20 @@
     function selectCategory(cat: string) {
         selectedCategory = cat;
         if (searchTerm) searchTerm = ''; // Clear search when selecting category
+        resetScroll();
+    }
+    function resetScroll() {
+        targetScroll = 0;
+        currentScroll = 0;
+        if (scrollContainer) {
+            scrollContainer.scrollLeft = 0;
+        }
+    }
+    function clampTarget() {
+        if (scrollContainer) {
+            const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+            targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+        }
     }
     function placeFurniture(item: any) {
         fetchNui("PlaceFurniture", {
@@ -29,6 +48,72 @@
     }
     function CloseUI() {
         fetchNui("HideDecorationUI");
+    }
+    function scrollLeft() {
+        if (scrollContainer) {
+            targetScroll -= 212;
+            clampTarget();
+            if (!rafId) rafId = requestAnimationFrame(smoothScroll);
+        }
+    }
+    function scrollRight() {
+        if (scrollContainer) {
+            targetScroll += 212;
+            clampTarget();
+            if (!rafId) rafId = requestAnimationFrame(smoothScroll);
+        }
+    }
+    function smoothScroll() {
+        if (Math.abs(currentScroll - targetScroll) < 1) {
+            currentScroll = targetScroll;
+            if (scrollContainer) {
+                scrollContainer.scrollLeft = currentScroll;
+                currentScroll = scrollContainer.scrollLeft; // Sync with browser clamp
+            }
+            rafId = null;
+            return;
+        }
+        currentScroll += (targetScroll - currentScroll) * 0.15; // Adjust easing factor for smoothness (higher = faster)
+        if (scrollContainer) {
+            scrollContainer.scrollLeft = currentScroll;
+            currentScroll = scrollContainer.scrollLeft; // Sync with browser clamp
+        }
+        rafId = requestAnimationFrame(smoothScroll);
+    }
+    onMount(async () => {
+        await tick(); // Ensure DOM is updated
+        if (scrollContainer) {
+            currentScroll = scrollContainer.scrollLeft;
+            targetScroll = currentScroll;
+            clampTarget();
+            const handleWheel = (e: WheelEvent) => {
+                e.preventDefault();
+                if (scrollContainer) {
+                    targetScroll += e.deltaY;
+                    clampTarget();
+                    if (!rafId) {
+                        rafId = requestAnimationFrame(smoothScroll);
+                    }
+                }
+            };
+            scrollContainer.addEventListener('wheel', handleWheel, { passive: false });
+            return () => {
+                scrollContainer.removeEventListener('wheel', handleWheel);
+            };
+        }
+    });
+    afterUpdate(async () => {
+        await tick();
+        clampTarget();
+    });
+    onDestroy(() => {
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+        }
+    });
+    // Reset scroll when search starts
+    $: if (searchTerm && searchTerm.length > 0) {
+        resetScroll();
     }
 </script>
 
@@ -63,13 +148,23 @@
                     {/if}
                 </div>
             </aside>
-            <main class="flex-1 flex items-end">
+            <main class="flex-1 flex items-end relative">
                 {#if displayFurniture.length > 0}
-                    <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] overflow-hidden shadow-2xl">
-                        <div class="h-full p-3 overflow-x-auto overflow-y-hidden hide-scrollbar">
+                    <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] overflow-hidden shadow-2xl relative">
+                        <button
+                            on:click={scrollLeft}
+                            class="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-[#1a1a1a]/80 hover:bg-[#1a1a1a] text-white p-2 rounded-full transition-colors opacity-70 hover:opacity-100"
+                            disabled={!scrollContainer || scrollContainer.scrollLeft <= 0}
+                            style="pointer-events: {scrollContainer && scrollContainer.scrollLeft <= 0 ? 'none' : 'auto'}; opacity: {scrollContainer && scrollContainer.scrollLeft <= 0 ? '30%' : '70%'}"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m15 18-6-6 6-6"/>
+                            </svg>
+                        </button>
+                        <div bind:this={scrollContainer} class="h-full p-3 overflow-x-auto overflow-y-hidden hide-scrollbar-horizontal snap-x snap-mandatory absolute inset-0">
                             <div class="grid grid-rows-[118px_118px] auto-cols-[200px] grid-flow-col gap-3 w-max h-full">
-                                {#each displayFurniture as item}
-                                    <div class="bg-[#1a1a1a] rounded-lg border border-[#333333] hover:border-blue-400 transition-all flex flex-col h-full p-2.5 shadow-sm hover:shadow-md">
+                                {#each displayFurniture as item (item.Model)}
+                                    <div class="bg-[#1a1a1a] rounded-lg border border-[#333333] hover:border-blue-400 transition-all flex flex-col h-full p-2.5 shadow-sm hover:shadow-md snap-start">
                                         {#if searchTerm && item.category}
                                             <div class="text-xs text-gray-400 mb-1">{item.category}</div>
                                         {/if}
@@ -92,6 +187,18 @@
                                 {/each}
                             </div>
                         </div>
+                        <button
+                            on:click={scrollRight}
+                            class="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-[#1a1a1a]/80 hover:bg-[#1a1a1a] text-white p-2 rounded-full transition-colors opacity-70 hover:opacity-100"
+                            disabled={!scrollContainer || scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth)}
+                            style="pointer-events: {scrollContainer && scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth) ? 'none' : 'auto'}; opacity: {scrollContainer && scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth) ? '30%' : '70%'}"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </button>
+                        <!-- Fade indicator on right -->
+                        <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#1e1e1e] to-transparent pointer-events-none z-10"></div>
                     </div>
                 {:else}
                     <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] flex items-center justify-center text-gray-400 text-sm shadow-2xl">No furniture found</div>
@@ -111,16 +218,34 @@
         scrollbar-width: none;  /* Firefox */
         -webkit-overflow-scrolling: touch;
     }
+
+    .hide-scrollbar-horizontal::-webkit-scrollbar {
+        display: none;
+    }
+
+    .hide-scrollbar-horizontal {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+    }
+
     * {
         user-select: none;
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
     }
+
     .line-clamp-1 {
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
+    }
+
+    button:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
     }
 </style>
