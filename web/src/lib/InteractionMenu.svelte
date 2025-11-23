@@ -217,7 +217,6 @@
                     {/if}
                 </div>
             </div>
-
             <!-- Right Side: Sales Data and Administrate -->
             <div class="flex-1 flex flex-col space-y-6">
                 <!-- Sales Data Section -->
@@ -263,7 +262,6 @@
                         </div>
                     </div>
                 {/if}
-
                 <!-- Administrate Section -->
                 <div class="flex-1 bg-[#1a1a1a] rounded-lg border border-[#333333] p-4 flex flex-col">
                     <h2 class="text-white font-semibold mb-4 text-lg flex items-center">
