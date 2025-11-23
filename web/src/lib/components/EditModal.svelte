@@ -10,7 +10,7 @@
     }
     function HandleGaragePoint() {
         if (houseId) {
-            fetchNui("SetGarage", parseInt(houseId));
+            fetchNui("SetGarage", parseInt(houseId) + 1);
             Current.set("guide")
         }
     }
