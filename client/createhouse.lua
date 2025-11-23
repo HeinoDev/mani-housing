@@ -94,8 +94,6 @@ RegisterNUICallback('RemoveHouse', function(HouseId, cb)
 
     local Success, Error = lib.callback.await('mani-housing:server:RemoveHouse', false, HouseId)
 
-    print(Success, Error)
-
     -- notify
 
     cb({})
