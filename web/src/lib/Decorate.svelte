@@ -1,12 +1,16 @@
 <script lang="ts">
     import { Config } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
-    import { onMount, onDestroy, afterUpdate, tick } from 'svelte';
+    import { onMount, onDestroy, tick } from 'svelte';
     let selectedCategory = Object.keys($Config?.Furniture || {})[0] || '';
     let searchTerm = '';
     let scrollContainer: HTMLDivElement;
-    let currentScroll = 0;
-    let targetScroll = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startScrollLeft = 0;
+    let velocity = 0;
+    let lastX = 0;
+    let lastTime = 0;
     let rafId: number | null = null;
     $: categories = Object.keys($Config?.Furniture || {}).sort();  // Alphabetical order
     $: furniture = $Config?.Furniture[selectedCategory] || [];
@@ -27,16 +31,8 @@
         resetScroll();
     }
     function resetScroll() {
-        targetScroll = 0;
-        currentScroll = 0;
         if (scrollContainer) {
             scrollContainer.scrollLeft = 0;
-        }
-    }
-    function clampTarget() {
-        if (scrollContainer) {
-            const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-            targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
         }
     }
     function placeFurniture(item: any) {
@@ -51,62 +47,78 @@
     }
     function scrollLeft() {
         if (scrollContainer) {
-            targetScroll -= 212;
-            clampTarget();
-            if (!rafId) rafId = requestAnimationFrame(smoothScroll);
+            scrollContainer.scrollBy({ left: -212, behavior: 'smooth' });
         }
     }
     function scrollRight() {
         if (scrollContainer) {
-            targetScroll += 212;
-            clampTarget();
-            if (!rafId) rafId = requestAnimationFrame(smoothScroll);
+            scrollContainer.scrollBy({ left: 212, behavior: 'smooth' });
         }
     }
-    function smoothScroll() {
-        if (Math.abs(currentScroll - targetScroll) < 1) {
-            currentScroll = targetScroll;
-            if (scrollContainer) {
-                scrollContainer.scrollLeft = currentScroll;
-                currentScroll = scrollContainer.scrollLeft; // Sync with browser clamp
+    function handleMouseDown(e: MouseEvent) {
+        isDragging = true;
+        startX = e.pageX - scrollContainer!.offsetLeft;
+        startScrollLeft = scrollContainer!.scrollLeft;
+        lastX = startX;
+        lastTime = Date.now();
+        velocity = 0;
+        scrollContainer!.style.cursor = 'grabbing';
+        scrollContainer!.style.userSelect = 'none';
+        if (rafId) cancelAnimationFrame(rafId);
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    }
+    function handleMouseMove(e: MouseEvent) {
+        if (!isDragging || !scrollContainer) return;
+        e.preventDefault();
+        const x = e.pageX - scrollContainer.offsetLeft;
+        const now = Date.now();
+        if (lastTime) {
+            const deltaX = x - lastX;
+            const deltaT = now - lastTime;
+            if (deltaT > 0) {
+                velocity = deltaX / deltaT;
             }
+        }
+        lastX = x;
+        lastTime = now;
+        const walk = (x - startX) * 0.8; // Further reduced sensitivity for slower drag
+        scrollContainer.scrollLeft = startScrollLeft - walk;
+    }
+    function handleMouseUp() {
+        if (!isDragging || !scrollContainer) return;
+        isDragging = false;
+        scrollContainer.style.cursor = 'grab';
+        scrollContainer.style.userSelect = '';
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+
+        // Apply momentum if there's any velocity
+        if (Math.abs(velocity) > 0.1) { // Lowered threshold for more responsive momentum
+            momentumScroll();
+        }
+    }
+    function momentumScroll() {
+        if (!scrollContainer || Math.abs(velocity) < 0.01) {
             rafId = null;
             return;
         }
-        currentScroll += (targetScroll - currentScroll) * 0.15; // Adjust easing factor for smoothness (higher = faster)
-        if (scrollContainer) {
-            scrollContainer.scrollLeft = currentScroll;
-            currentScroll = scrollContainer.scrollLeft; // Sync with browser clamp
-        }
-        rafId = requestAnimationFrame(smoothScroll);
+        const walk = velocity * 12; // Reduced walk for less momentum
+        scrollContainer.scrollLeft -= walk;
+        velocity *= 0.88; // Increased friction for quicker stop
+        rafId = requestAnimationFrame(momentumScroll);
     }
     onMount(async () => {
-        await tick(); // Ensure DOM is updated
+        await tick();
         if (scrollContainer) {
-            currentScroll = scrollContainer.scrollLeft;
-            targetScroll = currentScroll;
-            clampTarget();
-            const handleWheel = (e: WheelEvent) => {
-                e.preventDefault();
-                if (scrollContainer) {
-                    targetScroll += e.deltaY;
-                    clampTarget();
-                    if (!rafId) {
-                        rafId = requestAnimationFrame(smoothScroll);
-                    }
-                }
-            };
-            scrollContainer.addEventListener('wheel', handleWheel, { passive: false });
-            return () => {
-                scrollContainer.removeEventListener('wheel', handleWheel);
-            };
+            scrollContainer.style.cursor = 'grab';
         }
     });
-    afterUpdate(async () => {
-        await tick();
-        clampTarget();
-    });
     onDestroy(() => {
+        if (isDragging) {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
         if (rafId) {
             cancelAnimationFrame(rafId);
         }
@@ -151,20 +163,14 @@
             <main class="flex-1 flex items-end relative">
                 {#if displayFurniture.length > 0}
                     <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] overflow-hidden shadow-2xl relative">
-                        <button
-                            on:click={scrollLeft}
-                            class="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-[#1a1a1a]/80 hover:bg-[#1a1a1a] text-white p-2 rounded-full transition-colors opacity-70 hover:opacity-100"
-                            disabled={!scrollContainer || scrollContainer.scrollLeft <= 0}
-                            style="pointer-events: {scrollContainer && scrollContainer.scrollLeft <= 0 ? 'none' : 'auto'}; opacity: {scrollContainer && scrollContainer.scrollLeft <= 0 ? '30%' : '70%'}"
+                        <div 
+                            bind:this={scrollContainer} 
+                            on:mousedown|preventDefault={handleMouseDown}
+                            class="h-full p-3 overflow-x-auto overflow-y-hidden hide-scrollbar-horizontal absolute inset-0 select-none"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m15 18-6-6 6-6"/>
-                            </svg>
-                        </button>
-                        <div bind:this={scrollContainer} class="h-full p-3 overflow-x-auto overflow-y-hidden hide-scrollbar-horizontal snap-x snap-mandatory absolute inset-0">
                             <div class="grid grid-rows-[118px_118px] auto-cols-[200px] grid-flow-col gap-3 w-max h-full">
                                 {#each displayFurniture as item (item.Model)}
-                                    <div class="bg-[#1a1a1a] rounded-lg border border-[#333333] hover:border-blue-400 transition-all flex flex-col h-full p-2.5 shadow-sm hover:shadow-md snap-start">
+                                    <div class="bg-[#1a1a1a] rounded-lg border border-[#333333] hover:border-blue-400 transition-all flex flex-col h-full p-2.5 shadow-sm hover:shadow-md">
                                         {#if searchTerm && item.category}
                                             <div class="text-xs text-gray-400 mb-1">{item.category}</div>
                                         {/if}
@@ -187,16 +193,6 @@
                                 {/each}
                             </div>
                         </div>
-                        <button
-                            on:click={scrollRight}
-                            class="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-[#1a1a1a]/80 hover:bg-[#1a1a1a] text-white p-2 rounded-full transition-colors opacity-70 hover:opacity-100"
-                            disabled={!scrollContainer || scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth)}
-                            style="pointer-events: {scrollContainer && scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth) ? 'none' : 'auto'}; opacity: {scrollContainer && scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth) ? '30%' : '70%'}"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m9 18 6-6-6-6"/>
-                            </svg>
-                        </button>
                         <!-- Fade indicator on right -->
                         <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#1e1e1e] to-transparent pointer-events-none z-10"></div>
                     </div>
@@ -227,7 +223,6 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x mandatory;
     }
 
     * {
