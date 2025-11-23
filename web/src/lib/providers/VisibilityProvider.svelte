@@ -7,8 +7,17 @@
 	onMount(() => {
 		const keyHandler = (e: KeyboardEvent) => {
 			if ($visibility && e.code === "Escape") {
-				fetchNui("HideUI");
 				visibility.hide();
+
+				if ($Current == "decor")
+				{
+					fetchNui("StopDecorating");
+				}
+				else
+				{
+					fetchNui("HideUI");
+				}
+				
 			}
 		};
 
@@ -40,12 +49,6 @@
 
 	useNuiEvent("InitializeUI", (Data: any) => {
 		Config.set(Data);
-
-		if (Data.Debug)
-		{
-			visibility.show();
-			Current.set("decor");
-		}
 	});
 </script>
 

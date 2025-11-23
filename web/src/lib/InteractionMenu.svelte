@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { visibilityStore as visibility, House, NearbyPlayers } from "$lib/stores/VisibilityStore";
+    import { visibilityStore as visibility, House, NearbyPlayers, Current } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
     import SelectPlayer from "./components/SelectPlayer.svelte";
 
@@ -65,6 +65,14 @@
     function placeStash() {
         fetchNui("PlaceStash");
         visibility.hide();
+    }
+
+    function startDecorating() {
+        fetchNui('StartDecorating').then(Success => {
+            console.log(Success);
+            if (Success)
+                Current.set("decor");
+        })
     }
 
     function CloseUI() {
@@ -276,6 +284,10 @@
                         <button onclick={placeStash} class="w-full bg-[#1e1e1e] border border-[#333333] rounded-md p-3 text-left hover:bg-[#2a2a2a] transition-colors text-sm text-white flex items-center gap-3">
                             <i class="fas fa-box text-purple-400 w-5 h-5"></i>
                             Place Stash
+                        </button>
+                        <button onclick={startDecorating} class="w-full bg-[#1e1e1e] border border-[#333333] rounded-md p-3 text-left hover:bg-[#2a2a2a] transition-colors text-sm text-white flex items-center gap-3">
+                            <i class="fas fa-couch text-purple-400 w-5 h-5"></i>
+                            Decorate
                         </button>
                     </div>
                 </div>

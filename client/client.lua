@@ -291,16 +291,12 @@ CreateThread(function()
         Config.ShellIndexes[Shell.Model] = i
     end
 
-    Wait(400)
+    Wait(500)
 
     SendNUIMessage({
         action = "InitializeUI",
         data = Config
     })
-
-    if Config.Debug then
-        SetNuiFocus(true, true)
-    end
 end)
 
 RegisterCommand(Config.Commands['RealEstate'], function()
