@@ -129,7 +129,7 @@
     }
 </script>
 
-<div class="fixed inset-0 bg-black bg-opacity-50 select-none z-40">
+<div class="fixed inset-0 select-none z-40">
     <div class="fixed bottom-0 left-0 right-0 w-full h-[450px] flex flex-col overflow-hidden">
         <div class="flex flex-1 overflow-hidden">
             <aside class="w-1/5 min-w-[200px] bg-[#1e1e1e] border-r border-[#333333] flex flex-col h-full rounded-t-md shadow-2xl flex-shrink-0">

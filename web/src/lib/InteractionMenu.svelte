@@ -69,7 +69,6 @@
 
     function startDecorating() {
         fetchNui('StartDecorating').then(Success => {
-            console.log(Success);
             if (Success)
                 Current.set("decor");
         })
