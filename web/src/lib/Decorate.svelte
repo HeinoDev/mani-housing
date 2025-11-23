@@ -92,7 +92,6 @@
         scrollContainer.style.userSelect = '';
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
-
         // Apply momentum if there's any velocity
         if (Math.abs(velocity) > 0.1) { // Lowered threshold for more responsive momentum
             momentumScroll();
@@ -108,11 +107,17 @@
         velocity *= 0.88; // Increased friction for quicker stop
         rafId = requestAnimationFrame(momentumScroll);
     }
+    function handleKeyDown(e: KeyboardEvent) {
+        if (e.key === 'Alt' && e.location === KeyboardEvent.DOM_KEY_LOCATION_LEFT) {
+            ToggleFocus();
+        }
+    }
     onMount(async () => {
         await tick();
         if (scrollContainer) {
             scrollContainer.style.cursor = 'grab';
         }
+        document.addEventListener('keydown', handleKeyDown);
     });
     onDestroy(() => {
         if (isDragging) {
@@ -122,13 +127,16 @@
         if (rafId) {
             cancelAnimationFrame(rafId);
         }
+        document.removeEventListener('keydown', handleKeyDown);
     });
     // Reset scroll when search starts
     $: if (searchTerm && searchTerm.length > 0) {
         resetScroll();
     }
+    function ToggleFocus() {
+        fetchNui("ToggleFocus");
+    }
 </script>
-
 <div class="fixed inset-0 select-none z-40">
     <div class="fixed bottom-0 left-0 right-0 w-full h-[450px] flex flex-col overflow-hidden">
         <div class="flex flex-1 overflow-hidden">
@@ -163,8 +171,8 @@
             <main class="flex-1 flex items-end relative">
                 {#if displayFurniture.length > 0}
                     <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] overflow-hidden shadow-2xl relative">
-                        <div 
-                            bind:this={scrollContainer} 
+                        <div
+                            bind:this={scrollContainer}
                             on:mousedown|preventDefault={handleMouseDown}
                             class="h-full p-3 overflow-x-auto overflow-y-hidden hide-scrollbar-horizontal absolute inset-0 select-none"
                         >
@@ -203,7 +211,6 @@
         </div>
     </div>
 </div>
-
 <style lang="css">
     .hide-scrollbar::-webkit-scrollbar {
         display: none;
@@ -214,31 +221,26 @@
         scrollbar-width: none;  /* Firefox */
         -webkit-overflow-scrolling: touch;
     }
-
     .hide-scrollbar-horizontal::-webkit-scrollbar {
         display: none;
     }
-
     .hide-scrollbar-horizontal {
         -ms-overflow-style: none;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
     }
-
     * {
         user-select: none;
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
     }
-
     .line-clamp-1 {
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
-
     button:disabled {
         opacity: 0.3;
         cursor: not-allowed;

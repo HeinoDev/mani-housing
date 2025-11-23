@@ -20,6 +20,7 @@ end)
 RegisterNUICallback('StopDecorating', function(_, cb)
     FocusKeybind:disable(true)
     SetNuiFocus(false, false)
+    LeaveCursorMode()
     RemoveEdit()
     cb({})
 end)
@@ -46,7 +47,19 @@ local function ToggleFocus()
     local Focus = not IsNuiFocused()
 
     SetNuiFocus(Focus, Focus)
+
+    if not Focus then
+        LeaveCursorMode()
+    else
+        EnterCursorMode()
+    end
 end
+
+RegisterNUICallback('ToggleFocus', function(_, cb)
+    ToggleFocus()
+
+    cb({})
+end)
 
 CreateThread(function()
     FocusKeybind = lib.addKeybind({
