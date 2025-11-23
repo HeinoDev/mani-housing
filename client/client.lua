@@ -198,7 +198,7 @@ local function CreateHouse(HouseIndex, House)
             local PlayerCoords = GetEntityCoords(PlayerPed)
             local Distance = #(PlayerCoords - HouseCoords)
 
-            self.Estate = House.State == 0
+            self.Estate = House.State == 0 and self.PlayerData.Identifier ~= House.Owner
 
             if not self.Estate then
                 local IsOwner = House.Owner == self.PlayerData.Identifier

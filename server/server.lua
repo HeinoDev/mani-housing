@@ -515,8 +515,10 @@ function HouseClass:Sell(Price)
         self:RemoveKeyholder(Identifier, true)
     end
 
-    MySQL.update.await('UPDATE mani_houses SET state = ?, salesdata = ?, WHERE houseid = ?', {
-        self.State, self.SalesData, self.HouseId
+    MySQL.update.await('UPDATE mani_houses SET state = ?, salesdata = ? WHERE houseid = ?', {
+        self.State, 
+        json.encode(self.SalesData), 
+        self.HouseId
     })
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')

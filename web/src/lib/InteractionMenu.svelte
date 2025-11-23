@@ -234,7 +234,12 @@
                                         <i class="fas fa-tag w-4 h-4"></i>
                                         Price
                                     </span>
-                                    <span class="text-white font-semibold">${$House.SalesData.Price}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-white font-semibold">${$House.SalesData.Price}</span>
+                                        {#if $House.State == 0}
+                                            <span class="bg-blue-400 text-white px-2 py-1 rounded text-xs font-medium">For Sale</span>
+                                        {/if}
+                                    </div>
                                 </div>
                             </div>
                             <div class="bg-[#1e1e1e] rounded-md border border-[#333333] p-3">

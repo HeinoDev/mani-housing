@@ -9,16 +9,20 @@
     let showEditModal = false;
     let showConfirm = false;
     let showInput = false;
-    let selectedHouseId = null;
+    let selectedHouseId: string | null = null;
     let searchTerm = '';
     let onlyInactive = false;
-    $: filteredHouses = Object.values($Houses || {}).filter(house => {
-        if (!house) return false;
-        if (onlyInactive && house.State == 1) return false;
-        const label = `${house.Coords.Zone}: ${house.HouseId}`;
-        const owner = house.SalesData.OwnerName || '';
-        return label.toLowerCase().includes(searchTerm.toLowerCase()) || owner.toLowerCase().includes(searchTerm.toLowerCase());
-    }).slice(0, 30);
+    $: entries = Object.entries($Houses || {});
+    $: filteredHouses = entries
+        .filter(([key, house]) => {
+            if (!house) return false;
+            if (onlyInactive && house.State == 1) return false;
+            const label = `${house.Coords.Zone}: ${house.HouseId}`;
+            const owner = house.SalesData?.OwnerName || '';
+            return label.toLowerCase().includes(searchTerm.toLowerCase()) || owner.toLowerCase().includes(searchTerm.toLowerCase());
+        })
+        .map(([key, house]) => ({ id: key, house }))
+        .slice(0, 30);
    
     function CloseUI() {
         fetchNui("HideUI");
@@ -38,51 +42,48 @@
     function CloseCreateModal() {
         showCreateModal = false;
     }
-
-    function EditHouse(houseId: number) {
+    function EditHouse(houseId: string) {
         selectedHouseId = houseId;
         showEditModal = true;
     }
-
     function CloseEditModal() {
         showEditModal = false;
     }
-
-    function ViewLocation(houseId: number) {
-        fetchNui("ViewLocation", houseId);
+    function ViewLocation(houseId: string) {
+        fetchNui("ViewLocation", parseInt(houseId));
         visibility.hide();
     }
-
     function RemoveHouse() {
         CloseEditModal();
         showConfirm = true;
     }
-
     function handleConfirm(e) {
         showConfirm = false;
         if (e.detail) {
-            fetchNui("RemoveHouse", selectedHouseId);
+            if (selectedHouseId) {
+                fetchNui("RemoveHouse", parseInt(selectedHouseId));
+            }
             visibility.hide();
         }
     }
-
     function SellHouse() {
         showEditModal = false;
         showInput = true;
     }
-
     function handleSell(e) {
         showInput = false;
-        if (e.type == "confirm") {
-            fetchNui("SellHouse", {
-                HouseId: selectedHouseId,
-                Price: e.detail
-            });
+        if (e.type == "confirm" && selectedHouseId) {
+            const house = $Houses[selectedHouseId];
+            if (house) {
+                fetchNui("SellHouse", {
+                    HouseId: house.HouseId,
+                    Price: e.detail
+                });
+            }
             visibility.hide();
         }
     }
 </script>
-
 <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 select-none">
     <div class="w-[800px] h-[560px] bg-[#121212] rounded-md shadow-2xl flex flex-col overflow-hidden border border-[#333333]">
         <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center">
@@ -129,40 +130,40 @@
         </div>
         <div class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4">
             <div class="grid grid-cols-1 gap-4">
-                {#each filteredHouses as house}
+                {#each filteredHouses as item}
                     <div class="bg-[#1a1a1a] rounded-lg p-3 border border-[#333333] hover:border-blue-400 transition-colors flex flex-col h-full">
                         <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-white font-medium text-sm">{house.Coords.Zone}: {house.HouseId}</h3>
+                            <h3 class="text-white font-medium text-sm">{item.house.Coords.Zone}: {item.house.HouseId}</h3>
                             <div class="flex flex-row items-center gap-1">
-                                <button onclick={() => EditHouse(house.HouseId)} class="text-blue-400 hover:text-blue-300 p-1">
+                                <button onclick={() => EditHouse(item.id)} class="text-blue-400 hover:text-blue-300 p-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                     </svg>
                                 </button>
-                                <button onclick={() => ViewLocation(house.HouseId)} class="text-blue-400 hover:text-blue-300 p-1">
+                                <button onclick={() => ViewLocation(item.id)} class="text-blue-400 hover:text-blue-300 p-1">
                                     <i class="fas fa-map-marker-alt text-xs"></i>
                                 </button>
                             </div>
                         </div>
-                        {#if house.SalesData.OwnerName}
-                            <p class="text-gray-400 text-xs mb-3">Owner: {house.SalesData.OwnerName}</p>
+                        {#if item.house.SalesData?.OwnerName}
+                            <p class="text-gray-400 text-xs mb-3">Owner: {item.house.SalesData.OwnerName}</p>
                         {/if}
-                        <p class="text-gray-400 text-xs mb-3">Shell: {house.Shell}</p>
+                        <p class="text-gray-400 text-xs mb-3">Shell: {item.house.Shell}</p>
                         <div class="flex-1"></div>
                         <div class="flex justify-between items-center space-y-2">
                             <div class="flex flex-wrap gap-1">
-                                {#if house.Coords.Garage}
+                                {#if item.house.Coords.Garage}
                                     <span class="bg-gray-700 text-xs px-2 py-1 rounded">Garage</span>
                                 {/if}
-                                {#if house.Coords.Wardrobe}
+                                {#if item.house.Coords.Wardrobe}
                                     <span class="bg-gray-700 text-xs px-2 py-1 rounded">Wardrobe</span>
                                 {/if}
-                                {#if house.Coords.Stash}
+                                {#if item.house.Coords.Stash}
                                     <span class="bg-gray-700 text-xs px-2 py-1 rounded">Stash</span>
                                 {/if}
                             </div>
-                            <span class="text-green-400 text-sm font-medium">${house.SalesData.Price.toLocaleString()}</span>
+                            <span class="text-green-400 text-sm font-medium">${item.house.SalesData?.Price?.toLocaleString() || '0'}</span>
                         </div>
                     </div>
                 {/each}
@@ -170,23 +171,18 @@
         </div>
     </div>
 </div>
-
 {#if showCreateModal}
     <CreateModal on:submit={HandleCreateHouse} on:close={CloseCreateModal} />
 {/if}
-
 {#if showEditModal}
     <EditModal houseId={selectedHouseId} on:close={CloseEditModal} on:remove={RemoveHouse} on:sell={SellHouse} />
 {/if}
-
 {#if showConfirm}
     <Confirm on:confirm={handleConfirm} message="Are you sure you want to remove this house?" />
 {/if}
-
 {#if showInput}
     <Input on:confirm={handleSell} />
 {/if}
-
 <style>
     .hide-scrollbar::-webkit-scrollbar {
         display: none;

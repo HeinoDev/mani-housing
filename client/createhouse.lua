@@ -102,7 +102,9 @@ end)
 RegisterNUICallback('SellHouse', function(Data, cb)
     SetNuiFocus(false, false)
 
-    local success, error = lib.callback.await('mani-housing:server:SellHouse', false, Data)
+    local Success, Error = lib.callback.await('mani-housing:server:SellHouse', false, Data)
+
+    print(Success, Error)
 
     -- notify
 
