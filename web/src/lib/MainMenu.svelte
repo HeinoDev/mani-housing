@@ -50,7 +50,7 @@
         showEditModal = false;
     }
     function ViewLocation(houseId: string) {
-        fetchNui("ViewLocation", parseInt(houseId));
+        fetchNui("ViewLocation", parseInt(houseId) + 1);
         visibility.hide();
     }
     function RemoveHouse() {
@@ -61,7 +61,7 @@
         showConfirm = false;
         if (e.detail) {
             if (selectedHouseId) {
-                fetchNui("RemoveHouse", parseInt(selectedHouseId));
+                fetchNui("RemoveHouse", parseInt(selectedHouseId) + 1);
             }
             visibility.hide();
         }

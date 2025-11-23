@@ -336,10 +336,12 @@ end)
 lib.callback.register('mani-housing:server:RemoveHouse', function(Source, HouseId)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return false, 'no playerdata' end
-    -- if not Config.WhitelistedJobs[PlayerData.Job.name] then return false, 'Error No ablo job' end
+    if not Config.WhitelistedJobs[PlayerData.Job.name] and not Config.Debug then return false, 'Error No ablo job' end
+
+    print(HouseId)
 
     local House = HouseCache[HouseId]
-    if not House then return end
+    if not House then return false, 'no house' end
 
     House:Remove()
 
@@ -480,15 +482,20 @@ function HouseClass:SetGarage(Coords)
 end
 
 function HouseClass:Remove()
+    print(1)
+
     MySQL.query.await('DELETE FROM mani_houses WHERE houseid = ?', {
         self.HouseId
     })
+    print(2)
 
     for Identifier, Data in pairs(self.Keyholders) do
         self:RemoveKeyholder(Identifier, true)
     end
+    print(3)
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Remove')
+    print(4)
 
     self = nil
 end
