@@ -13,6 +13,7 @@
     let searchTerm = '';
     let onlyInactive = false;
     $: filteredHouses = Object.values($Houses || {}).filter(house => {
+        if (!house) return false;
         if (onlyInactive && house.State == 1) return false;
         const label = `${house.Coords.Zone}: ${house.HouseId}`;
         const owner = house.SalesData.OwnerName || '';
@@ -48,7 +49,8 @@
     }
 
     function ViewLocation(houseId: number) {
-        fetchNui("ViewLocation", { id: houseId });
+        fetchNui("ViewLocation", houseId);
+        visibility.hide();
     }
 
     function RemoveHouse() {

@@ -308,9 +308,6 @@ RegisterCommand(Config.Commands['RealEstate'], function()
 end, false)
 
 RegisterNUICallback('ViewLocation', function(HouseId, cb)
-    print('dinmor')
-    print(HouseId)
-
     SetNuiFocus(false, false)
 
     local House = HouseCache[HouseId]
