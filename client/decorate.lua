@@ -116,8 +116,6 @@ local function RemoveEdit()
     if TempData['Prop'] then
         DeleteEntity(TempData['Prop'])
     end
-
-    ToggleKeybinds(true)
     
     if TempData['Cursor'] then LeaveCursorMode() end
 end
@@ -133,6 +131,7 @@ end)
 RegisterNUICallback('StopDecorating', function(_, cb)
     SetNuiFocus(false, false)
     RemoveEdit()
+    ToggleKeybinds(true)
     cb({})
 end)
 

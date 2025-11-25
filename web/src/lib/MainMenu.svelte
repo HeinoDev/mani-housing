@@ -83,6 +83,10 @@
             visibility.hide();
         }
     }
+    
+    function RealEstateMode() {
+        fetchNui("RealEstateMode");
+    }
 </script>
 <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 select-none">
     <div class="w-[800px] h-[560px] bg-[#121212] rounded-md shadow-2xl flex flex-col overflow-hidden border border-[#333333]">
@@ -91,7 +95,10 @@
                 <h1 class="text-white font-medium">Real Estate</h1>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick={CloseUI} class="text-gray-400 hover:text-white">
+                <button onclick={RealEstateMode} class="bg-purple-400 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-purple-500 transition-colors">
+                    Real Estate Mode
+                </button>
+                <button onclick={CloseUI} class="text-gray-400 hover:text-white" title="Close">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
@@ -171,18 +178,23 @@
         </div>
     </div>
 </div>
+
 {#if showCreateModal}
     <CreateModal on:submit={HandleCreateHouse} on:close={CloseCreateModal} />
 {/if}
+
 {#if showEditModal}
     <EditModal houseId={selectedHouseId} on:close={CloseEditModal} on:remove={RemoveHouse} on:sell={SellHouse} />
 {/if}
+
 {#if showConfirm}
     <Confirm on:confirm={handleConfirm} message="Are you sure you want to remove this house?" />
 {/if}
+
 {#if showInput}
     <Input on:confirm={handleSell} />
 {/if}
+
 <style>
     .hide-scrollbar::-webkit-scrollbar {
         display: none;
