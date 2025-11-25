@@ -107,8 +107,9 @@
         velocity *= 0.88; // Increased friction for quicker stop
         rafId = requestAnimationFrame(momentumScroll);
     }
-    function handleKeyDown(e: KeyboardEvent) {
-        if (e.key === 'Alt' && e.location === KeyboardEvent.DOM_KEY_LOCATION_LEFT) {
+    function handleRightClick(e: MouseEvent) {
+        if (e.button === 2) {
+            e.preventDefault();
             ToggleFocus();
         }
     }
@@ -117,7 +118,7 @@
         if (scrollContainer) {
             scrollContainer.style.cursor = 'grab';
         }
-        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('mousedown', handleRightClick);
     });
     onDestroy(() => {
         if (isDragging) {
@@ -127,7 +128,7 @@
         if (rafId) {
             cancelAnimationFrame(rafId);
         }
-        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener('mousedown', handleRightClick);
     });
     // Reset scroll when search starts
     $: if (searchTerm && searchTerm.length > 0) {
@@ -137,6 +138,7 @@
         fetchNui("ToggleFocus");
     }
 </script>
+
 <div class="fixed inset-0 select-none z-40">
     <div class="fixed bottom-0 left-0 right-0 w-full h-[450px] flex flex-col overflow-hidden">
         <div class="flex flex-1 overflow-hidden">
@@ -211,6 +213,7 @@
         </div>
     </div>
 </div>
+
 <style lang="css">
     .hide-scrollbar::-webkit-scrollbar {
         display: none;
@@ -221,26 +224,31 @@
         scrollbar-width: none;  /* Firefox */
         -webkit-overflow-scrolling: touch;
     }
+
     .hide-scrollbar-horizontal::-webkit-scrollbar {
         display: none;
     }
+
     .hide-scrollbar-horizontal {
         -ms-overflow-style: none;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
     }
+
     * {
         user-select: none;
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
     }
+
     .line-clamp-1 {
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
+
     button:disabled {
         opacity: 0.3;
         cursor: not-allowed;

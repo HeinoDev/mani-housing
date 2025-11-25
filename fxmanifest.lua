@@ -27,6 +27,7 @@ files {
     'config.lua',
     'locales/*.json',
     'open/cl_open.lua',
+    'open/dataview.lua',
     'web/build/index.html',
     'web/build/**/*'
 }
