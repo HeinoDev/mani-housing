@@ -6,6 +6,8 @@ local HousePoints, GarageTick = {}, nil
 
 local InHouse = { ShellModel = nil, Models = {}, Points = {} }
 
+local JobCache = {}
+
 lib.locale()
 
 RegisterCommand(Config.Commands['HouseInteraction'], function()
@@ -46,6 +48,21 @@ local function Draw3DText(x, y, z, text)
         local factor = (string.len(text)) / 370
         DrawRect(_x, _y + 0.0125, 0.015 + factor, 0.03, 41, 11, 41, 68)
     end
+end
+
+local function CreateBlip(Data)
+    local Blip = AddBlipForCoord(Data.Coords.xyz)
+    SetBlipSprite(Blip, Data.Sprite)
+    SetBlipDisplay(Blip, 4)
+    SetBlipScale(Blip, 0.8)
+    SetBlipColour(Blip, Data.Color)
+    SetBlipAsShortRange(Blip, true)
+
+    BeginTextCommandSetBlipName('STRING')
+    AddTextComponentString(Data.Name or '')
+    EndTextCommandSetBlipName(Blip)
+
+    return Blip
 end
 
 local function ExitHouse(House)
@@ -274,6 +291,91 @@ local function CreateHouse(HouseIndex, House)
     end
 end
 
+local function SetupJobBlips()
+    for HouseIndex, House in pairs(HouseCache) do
+        JobCache[HouseIndex] = {}
+
+        JobCache[HouseIndex]['Point'] = lib.points.new({
+            coords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z),
+            distance = Config.Distances['JobMode'],
+            nearby = function(self)
+                DrawMarker(
+                    20, -- Marker type
+                    House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z,
+                    0.0, 0.0, 0.0, -- Direction
+                    0.0, 0.0, 0.0, -- Rotation
+                    0.5, 0.5, 0.5, -- Scale
+                    0, 150, 255, 150, -- RGBA color (light blue)
+                    false, -- Bob up and down
+                    true, -- Face camera
+                    2, -- P19
+                    nil,
+                    nil,
+                    false
+                )
+
+                if House.Coords.Garage then
+                    DrawMarker(
+                        36, -- Marker type (cylinder)
+                        House.Coords.Garage.x, House.Coords.Garage.y, House.Coords.Garage.z, -- Position
+                        0.0, 0.0, 0.0, -- Direction
+                        0.0, 0.0, 0.0, -- Rotation
+                        1.0, 1.0, 1.0, -- Scale
+                        0, 150, 255, 150, -- RGBA color (light blue)
+                        false, -- Bob up and down
+                        true, -- Face camera
+                        2, -- P19
+                        nil, nil, false -- Texture dictionary, name, draw on entity
+                    )
+
+                    -- Draw line from coords to garageCoords
+                    DrawLine(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z, House.Coords.Garage.x, House.Coords.Garage.y, House.Coords.Garage.z, 0, 150, 255, 255)
+
+                    -- Calculate midpoint
+                    local midX = (House.Coords.Entrance.x + House.Coords.Garage.x) / 2
+                    local midY = (House.Coords.Entrance.y + House.Coords.Garage.y) / 2
+                    local midZ = (House.Coords.Entrance.z  + House.Coords.Garage.z) / 2
+
+                    -- Draw text at midpoint
+                    Draw3DText(midX, midY, midZ, "Garage")
+                end
+
+                if self.currentDistance < Config.Distances['Interact'] then
+                    Draw3DText(
+                        House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z + 0.5, -- Position slightly above the marker
+                        "Tryk [H] for hus information"
+                    )
+
+                    if IsControlJustPressed(0, 74) then
+                        -- Open House Stats
+                    end
+                end
+            end
+        })
+
+        JobCache[HouseIndex]['Blip'] = CreateBlip({
+            Coords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z),
+            Sprite = 40, -- House icon
+            Color = 3, -- Light blue
+            Name = ('%s %s'):format(House.Coords.Zone, House.HouseId)
+        })
+    end
+end
+
+local function RemoveJobBlips()
+    for HouseIndex, Data in pairs(JobCache) do
+        if Data['Point'] then
+            Data['Point']:remove()
+        end
+
+        if Data['Blip'] then
+            RemoveBlip(Data['Blip'])
+        end
+    end
+
+    JobCache = {}
+end
+
 CreateThread(function()
     Wait(250)
     -- ToDo: Run loop on character select or if the player is already loaded
@@ -327,6 +429,17 @@ RegisterNUICallback('GiveKeys', function(Players, cb)
         Success = Success,
         Keyholders = HouseCache[HouseId].Keyholders
     })
+end)
+
+RegisterNUICallback('RealEstateMode', function(_, cb)
+    cb({})
+    cache.jobMode = not cache.jobMode
+
+    if cache.jobMode then
+        SetupJobBlips()
+    else
+        RemoveJobBlips()
+    end
 end)
 
 RegisterNetEvent('mani-housing:client:UpdateHouse', function(House, Action)

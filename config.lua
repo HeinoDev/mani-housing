@@ -13,7 +13,8 @@ Config.Commands = {
 
 Config.Distances = {
 	['Main'] = 7.5, -- When the player can use house interactions.
-	['Interact'] = 0.75 -- When the player can enter and interact with interactions.
+	['Interact'] = 0.75, -- When the player can enter and interact with interactions.
+	['JobMode'] = 20.0 -- Distance for real estate job mode.
 }
 
 Config.ZOffset = 1000 -- How high the player should be when they enter the house. (Set to -Number if you want to lower the player)
