@@ -1,5 +1,5 @@
 
-local Keybinds, Editing = {}, { Prop = nil, Cursor = false, Mode = 'translate', Relative = false }
+local Keybinds, Editing = {}, { Prop = nil, Cursor = false, Mode = 'translate', Relative = false, Snap = { Active = false, Angle = 15.0, GridSize = 0.5 } }
 
 local dataview = lib.load('open.dataview')
 
@@ -65,6 +65,22 @@ local function gizmoLoop()
 
         if changed then
             applyEntityMatrix(Editing['Prop'], matrixBuffer)
+
+            if Editing['Snap'].Active then
+                local Pos = GetEntityCoords(Editing['Prop'])
+                local GridSize = Editing['Snap'].GridSize
+                local SnappedX = (math.floor((Pos.x / GridSize) + 0.5)) * GridSize
+                local SnappedY = (math.floor((Pos.y / GridSize) + 0.5)) * GridSize
+                local SnappedZ = (math.floor((Pos.z / GridSize) + 0.5)) * GridSize
+                SetEntityCoordsNoOffset(Editing['Prop'], SnappedX, SnappedY, SnappedZ, true, true, true)
+
+                local Rot = GetEntityRotation(Editing['Prop'], 2)
+                local SnapAngle = Editing['Snap'].Angle
+                local SnappedRotX = (math.floor((Rot.x / SnapAngle) + 0.5)) * SnapAngle
+                local snappedRotY = (math.floor((Rot.y / SnapAngle) + 0.5)) * SnapAngle
+                local snappedRotZ = (math.floor((Rot.z / SnapAngle) + 0.5)) * SnapAngle
+                SetEntityRotation(Editing['Prop'], SnappedRotX, snappedRotY, snappedRotZ, 2, true)
+            end
         end
 
         Wait(0)
@@ -111,7 +127,7 @@ end
 
 local function RemoveEdit()
     local TempData = Editing
-    Editing = { Prop = nil, Cursor = false, Mode = 'translate', Relative = false }
+    Editing = { Prop = nil, Cursor = false, Mode = 'translate', Relative = false, Snap = { Active = false, Angle = 15.0, GridSize = 0.5 } }
 
     if TempData['Prop'] then
         DeleteEntity(TempData['Prop'])
@@ -148,7 +164,7 @@ RegisterNUICallback('PlaceFurniture', function(Data, cb)
 
     local StartOffset = GetEntityCoords(PlayerPed) + GetEntityForwardVector(PlayerPed) * 2
 
-    Editing['Prop'] = CreateObject(ModelHash, StartOffset, false, false, false)
+    Editing['Prop'] = CreateObject(ModelHash, StartOffset.x, StartOffset.y, StartOffset.z, false, false, false)
 
     SetModelAsNoLongerNeeded(ModelHash)
     
@@ -203,6 +219,21 @@ CreateThread(function()
         end,
         onReleased = function (self)
             ExecuteCommand('-gizmoRotation')
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateSnap',
+        description = 'Hold to snap decoration object',
+        defaultKey = 'LSHIFT',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            Editing['Snap'].Active = true
+        end,
+        onReleased = function (self)
+            if not Editing['Prop'] then return end
+            Editing['Snap'].Active = false
         end
     })
 
