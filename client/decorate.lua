@@ -100,6 +100,8 @@ local function textUILoop()
                 '[R]     - Rotate Mode  \n' ..
                 '[Q]     - Relative/World  \n' ..
                 '[LALT]  - Snap To Ground  \n' ..
+                '[Shift]  - Placement/Rot Snap  \n' ..
+                '[Arrow Up/Down]  - Snapping Angle/Grid Size  \n' ..
                 '[ENTER] - Done Editing  \n'
             )
         end
@@ -234,6 +236,30 @@ CreateThread(function()
         onReleased = function (self)
             if not Editing['Prop'] then return end
             Editing['Snap'].Active = false
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateSnapIncrease',
+        description = 'Increase snapping size',
+        defaultKey = 'Up',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            Editing['Snap'].Angle = Editing['Snap'].Angle + 5.0
+            Editing['Snap'].GridSize = Editing['Snap'].GridSize + 0.1
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateSnapDecrease',
+        description = 'Decrease snapping size',
+        defaultKey = 'Down',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            Editing['Snap'].Angle = Editing['Snap'].Angle - 5.0
+            Editing['Snap'].GridSize = Editing['Snap'].GridSize - 0.1
         end
     })
 
