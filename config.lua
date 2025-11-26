@@ -17,6 +17,27 @@ Config.Distances = {
 	['JobMode'] = 20.0 -- Distance for real estate job mode.
 }
 
+Config.Blips = {
+	['Owned'] = {
+		Sprite = 40,
+		Color = 2,
+		Scale = 0.8,
+		Name = 'Owned Property'
+	},
+	['Keyholder'] = {
+		Sprite = 40,
+		Color = 3,
+		Scale = 0.8,
+		Name = 'Keyholder Property'
+	},
+	['ForSale'] = {
+		Sprite = 374,
+		Color = 1,
+		Scale = 0.8,
+		Name = 'Property For Sale'
+	}
+}
+
 Config.ZOffset = 1000 -- How high the player should be when they enter the house. (Set to -Number if you want to lower the player)
 
 Config.Shells = {

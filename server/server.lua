@@ -194,7 +194,7 @@ end)
 lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
 
-    -- if not Config.WhitelistedJobs[PlayerData.Job.name] then return false, 'Error No ablo job' end
+    if not Config.WhitelistedJobs[PlayerData.Job.Name] then return false, 'Error No ablo job' end
 
     local HouseData = {
         Coords = {
@@ -206,8 +206,8 @@ lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
             Price = Data.Price,
             Salesman = PlayerData.Character.Fullname,
             SalesmanIdentifier = PlayerData.Identifier,
-            SalesmanJob = PlayerData.Job.name,
-            SalesmanJobLabel = PlayerData.Job.label,
+            SalesmanJob = PlayerData.Job.Name,
+            SalesmanJobLabel = PlayerData.Job.Label,
         }
     }
 
@@ -323,7 +323,7 @@ lib.callback.register('mani-housing:server:UpdateGarage', function(Source, Data)
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return false, 'no playerdata' end
-    -- if not Config.WhitelistedJobs[PlayerData.Job.name] then return false, 'Error No ablo job' end
+    if not Config.WhitelistedJobs[PlayerData.Job.Name] then return false, 'Error No ablo job' end
 
     local House = HouseCache[HouseId]
     if not House then return end
@@ -336,9 +336,7 @@ end)
 lib.callback.register('mani-housing:server:RemoveHouse', function(Source, HouseId)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return false, 'no playerdata' end
-    if not Config.WhitelistedJobs[PlayerData.Job.name] and not Config.Debug then return false, 'Error No ablo job' end
-
-    print(HouseId)
+    if not Config.WhitelistedJobs[PlayerData.Job.Name] and not Config.Debug then return false, 'Error No ablo job' end
 
     local House = HouseCache[HouseId]
     if not House then return false, 'no house' end

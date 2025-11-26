@@ -174,6 +174,8 @@ RegisterNUICallback('PlaceFurniture', function(Data, cb)
 
     RemoveEdit()
 
+    SetNuiFocus(true, true)
+
     cb({})
 end)
 

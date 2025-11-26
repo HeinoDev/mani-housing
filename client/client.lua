@@ -54,7 +54,7 @@ local function CreateBlip(Data)
     local Blip = AddBlipForCoord(Data.Coords.xyz)
     SetBlipSprite(Blip, Data.Sprite)
     SetBlipDisplay(Blip, 4)
-    SetBlipScale(Blip, 0.8)
+    SetBlipScale(Blip, Data.Scale or 0.8)
     SetBlipColour(Blip, Data.Color)
     SetBlipAsShortRange(Blip, true)
 
@@ -196,6 +196,8 @@ local function SeeOffer(HouseId)
 end
 
 local function CreateHouse(HouseIndex, House)
+    local PlayerData = exports['mani-bridge']:GetPlayerData()
+
     local HouseCoords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z)
 
     HousePoints[HouseIndex] = HousePoints[HouseIndex] or {}
@@ -289,6 +291,33 @@ local function CreateHouse(HouseIndex, House)
             end
         })
     end
+
+    if HousePoints[House.HouseId]['Blip'] then
+        RemoveBlip(HousePoints[House.HouseId]['Blip'])
+    end
+
+    if House.Owner == PlayerData.Identifier then
+        HousePoints[HouseIndex]['Blip'] = CreateBlip({
+            Coords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z),
+            Sprite = Config.Blips['Owned'].Sprite,
+            Color = Config.Blips['Owned'].Color,
+            Name =  ('%s (%s)'):format(Config.Blips['Owned'].Name, House.HouseId)
+        })
+    elseif House.Keyholders[PlayerData.Identifier] then
+        HousePoints[HouseIndex]['Blip'] = CreateBlip({
+            Coords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z),
+            Sprite = Config.Blips['Keyholder'].Sprite,
+            Color = Config.Blips['Keyholder'].Color,
+            Name =  ('%s (%s)'):format(Config.Blips['Keyholder'].Name, House.HouseId)
+        })
+    elseif House.State == 0 then
+        HousePoints[HouseIndex]['Blip'] = CreateBlip({
+            Coords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z),
+            Sprite = Config.Blips['ForSale'].Sprite,
+            Color = Config.Blips['ForSale'].Color,
+            Name =  Config.Blips['ForSale'].Name
+        })
+    end
 end
 
 local function SetupJobBlips()
@@ -367,13 +396,21 @@ local function RemoveJobBlips()
     JobCache = {}
 end
 
-CreateThread(function()
-    Wait(250)
-    -- ToDo: Run loop on character select or if the player is already loaded
-
+local function LoadAllHouses()
     for HouseIndex, House in pairs(HouseCache) do
         CreateHouse(HouseIndex, House)
     end
+end
+
+RegisterNetEvent('mani-bridge:client:PlayerLoaded', LoadAllHouses)
+
+CreateThread(function()
+    Wait(400)
+    
+    local PlayerData = exports['mani-bridge']:GetPlayerData()
+    if not PlayerData then return end
+
+    LoadAllHouses()
 end)
 
 CreateThread(function()
@@ -460,6 +497,10 @@ RegisterNetEvent('mani-housing:client:UpdateHouse', function(House, Action)
 
             if HousePoints[House.HouseId]['Garage'] then
                 HousePoints[House.HouseId]['Garage']:remove()
+            end
+
+            if HousePoints[House.HouseId]['Blip'] then
+                RemoveBlip(HousePoints[House.HouseId]['Blip'])
             end
         end
 
