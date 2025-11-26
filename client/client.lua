@@ -195,9 +195,7 @@ local function SeeOffer(HouseId)
     })
 end
 
-local function CreateHouse(HouseIndex, House)
-    local PlayerData = exports['mani-bridge']:GetPlayerData()
-
+local function CreateHouse(HouseIndex, House, PlayerData)
     local HouseCoords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z)
 
     HousePoints[HouseIndex] = HousePoints[HouseIndex] or {}
@@ -296,6 +294,8 @@ local function CreateHouse(HouseIndex, House)
         RemoveBlip(HousePoints[House.HouseId]['Blip'])
     end
 
+    local PlayerData = PlayerData or exports['mani-bridge']:GetPlayerData()
+
     if House.Owner == PlayerData.Identifier then
         HousePoints[HouseIndex]['Blip'] = CreateBlip({
             Coords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z),
@@ -373,12 +373,14 @@ local function SetupJobBlips()
             end
         })
 
-        JobCache[HouseIndex]['Blip'] = CreateBlip({
-            Coords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z),
-            Sprite = 40, -- House icon
-            Color = 3, -- Light blue
-            Name = ('%s %s'):format(House.Coords.Zone, House.HouseId)
-        })
+        if House.State ~= 0 then
+            JobCache[HouseIndex]['Blip'] = CreateBlip({
+                Coords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z),
+                Sprite = Config.Blips['JobMode'].Sprite,
+                Color = Config.Blips['JobMode'].Color,
+                Name =  Config.Blips['JobMode'].Name
+            })
+        end
     end
 end
 
@@ -396,9 +398,9 @@ local function RemoveJobBlips()
     JobCache = {}
 end
 
-local function LoadAllHouses()
+local function LoadAllHouses(PlayerData)
     for HouseIndex, House in pairs(HouseCache) do
-        CreateHouse(HouseIndex, House)
+        CreateHouse(HouseIndex, House, PlayerData)
     end
 end
 
@@ -410,7 +412,7 @@ CreateThread(function()
     local PlayerData = exports['mani-bridge']:GetPlayerData()
     if not PlayerData then return end
 
-    LoadAllHouses()
+    LoadAllHouses(PlayerData)
 end)
 
 CreateThread(function()

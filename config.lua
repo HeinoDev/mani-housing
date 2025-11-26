@@ -35,6 +35,12 @@ Config.Blips = {
 		Color = 1,
 		Scale = 0.8,
 		Name = 'Property For Sale'
+	},
+	['JobMode'] = {
+		Sprite = 40,
+		Color = 11,
+		Scale = 0.8,
+		Name = 'Registered Property'
 	}
 }
 
