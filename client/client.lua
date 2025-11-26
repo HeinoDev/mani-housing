@@ -306,48 +306,39 @@ local function SetupJobBlips()
                     0.0, 0.0, 0.0, -- Rotation
                     0.5, 0.5, 0.5, -- Scale
                     0, 150, 255, 150, -- RGBA color (light blue)
-                    false, -- Bob up and down
-                    true, -- Face camera
-                    2, -- P19
-                    nil,
-                    nil,
-                    false
+                    false, true, 2, false, nil, nil, false
                 )
 
                 if House.Coords.Garage then
                     DrawMarker(
-                        36, -- Marker type (cylinder)
-                        House.Coords.Garage.x, House.Coords.Garage.y, House.Coords.Garage.z, -- Position
+                        36, -- Marker type
+                        House.Coords.Garage.x, House.Coords.Garage.y, House.Coords.Garage.z,
                         0.0, 0.0, 0.0, -- Direction
                         0.0, 0.0, 0.0, -- Rotation
                         1.0, 1.0, 1.0, -- Scale
                         0, 150, 255, 150, -- RGBA color (light blue)
-                        false, -- Bob up and down
-                        true, -- Face camera
-                        2, -- P19
-                        nil, nil, false -- Texture dictionary, name, draw on entity
+                        false, true, 2, false, nil, nil, false
                     )
 
-                    -- Draw line from coords to garageCoords
                     DrawLine(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z, House.Coords.Garage.x, House.Coords.Garage.y, House.Coords.Garage.z, 0, 150, 255, 255)
 
-                    -- Calculate midpoint
                     local midX = (House.Coords.Entrance.x + House.Coords.Garage.x) / 2
                     local midY = (House.Coords.Entrance.y + House.Coords.Garage.y) / 2
                     local midZ = (House.Coords.Entrance.z  + House.Coords.Garage.z) / 2
 
-                    -- Draw text at midpoint
                     Draw3DText(midX, midY, midZ, "Garage")
                 end
 
                 if self.currentDistance < Config.Distances['Interact'] then
-                    Draw3DText(
-                        House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z + 0.5, -- Position slightly above the marker
-                        "Tryk [H] for hus information"
-                    )
+                    Draw3DText(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z + 0.5, 'Tryk [H] for hus information')
 
                     if IsControlJustPressed(0, 74) then
-                        -- Open House Stats
+                        SetNuiFocus(true, true)
+
+                        SendNUIMessage({
+                            action = "OpenHouseStats",
+                            data = House
+                        })
                     end
                 end
             end
@@ -393,6 +384,13 @@ CreateThread(function()
         Config.ShellIndexes[Shell.Model] = i
     end
 
+    local WhitelistedJobs = Config.WhitelistedJobs
+    Config.WhitelistedJobs = {}
+
+    for _, Job in ipairs(WhitelistedJobs) do
+        Config.WhitelistedJobs[Job] = true
+    end
+
     Wait(500)
 
     SendNUIMessage({
@@ -433,6 +431,14 @@ end)
 
 RegisterNUICallback('RealEstateMode', function(_, cb)
     cb({})
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData()
+    if not PlayerData then return end
+
+    local Job = PlayerData.Job.Name
+
+    if not Config.WhitelistedJobs[Job] then return end
+
     cache.jobMode = not cache.jobMode
 
     if cache.jobMode then

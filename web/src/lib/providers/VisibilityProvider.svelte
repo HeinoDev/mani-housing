@@ -31,6 +31,12 @@
 		Current.set("main");
 	});
 
+	useNuiEvent("OpenHouseStats", (Data: any) => {
+		visibility.show();
+		House.set(Data);
+		Current.set("editonly");
+	});
+
 	useNuiEvent("OpenHouseInteraction", (Data: any) => {
 		visibility.show();
 		Current.set("interaction");

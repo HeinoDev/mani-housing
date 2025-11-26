@@ -1,5 +1,6 @@
 <script lang="ts">
 	import MainMenu from "$lib/MainMenu.svelte";
+	import HouseEditOnly from "$lib/HouseEditOnly.svelte";
 	import HouseInteraction from "$lib/InteractionMenu.svelte";
 	import HouseOffer from "$lib/HouseOffer.svelte";
 	import Decorate from "$lib/Decorate.svelte";
@@ -11,6 +12,10 @@
 <VisibilityProvider>
 	{#if $Current == "main"}
 		<MainMenu />
+	{/if}
+
+	{#if $Current == "editonly"}
+		<HouseEditOnly />
 	{/if}
 
 	{#if $Current == "interaction"}

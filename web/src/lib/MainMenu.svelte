@@ -42,21 +42,26 @@
     function CloseCreateModal() {
         showCreateModal = false;
     }
+
     function EditHouse(houseId: string) {
         selectedHouseId = houseId;
         showEditModal = true;
     }
+
     function CloseEditModal() {
         showEditModal = false;
     }
+
     function ViewLocation(houseId: string) {
         fetchNui("ViewLocation", parseInt(houseId) + 1);
         visibility.hide();
     }
+
     function RemoveHouse() {
         CloseEditModal();
         showConfirm = true;
     }
+
     function handleConfirm(e) {
         showConfirm = false;
         if (e.detail) {
@@ -66,10 +71,12 @@
             visibility.hide();
         }
     }
+
     function SellHouse() {
         showEditModal = false;
         showInput = true;
     }
+
     function handleSell(e) {
         showInput = false;
         if (e.type == "confirm" && selectedHouseId) {
@@ -88,6 +95,7 @@
         fetchNui("RealEstateMode");
     }
 </script>
+
 <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 select-none">
     <div class="w-[800px] h-[560px] bg-[#121212] rounded-md shadow-2xl flex flex-col overflow-hidden border border-[#333333]">
         <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center">
