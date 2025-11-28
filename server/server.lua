@@ -141,12 +141,12 @@ end)
 
 lib.callback.register('mani-housing:server:GiveKeys', function(Source, Players, HouseId)
     local House = HouseCache[HouseId]
-    if not House then return false, 'no house exist' end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return false, 'something wrong' end
+    if not PlayerData then return false, locale('Notify.GenericError') end
 
-    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
 
     for i = 1, #Players do
         local PlayerSource = Players[i]
@@ -165,12 +165,12 @@ end)
 
 lib.callback.register('mani-housing:server:UpdatePermissions', function(Source, Data)
     local House = HouseCache[Data.HouseId]
-    if not House then return false, 'no house exist' end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return end
+    if not PlayerData then return false, locale('Notify.GenericError') end
 
-    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
 
     House:UpdatePermissions(Data.Identifier, Data.Permissions)
 
@@ -179,12 +179,12 @@ end)
 
 lib.callback.register('mani-housing:server:RemoveKeyholder', function(Source, Data)
     local House = HouseCache[Data.HouseId]
-    if not House then return false, 'no house exist' end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return false, 'no playerdata' end
+    if not PlayerData then return false, locale('Notify.GenericError') end
 
-    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
 
     House:RemoveKeyholder(Data.Identifier)
 
@@ -194,7 +194,7 @@ end)
 lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
 
-    if not Config.WhitelistedJobs[PlayerData.Job.Name] then return false, 'Error No ablo job' end
+    if not Config.WhitelistedJobs[PlayerData.Job.Name] then return false, locale('Notify.NoPermission') end
 
     local HouseData = {
         Coords = {
@@ -217,7 +217,7 @@ lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
         Data.Shell
     })
 
-    if not HouseId then return false, 'ewow id no work' end
+    if not HouseId then return false, locale('Notify.GenericError') end
 
     local House = HouseClass:New({
         HouseId = HouseId,
@@ -239,18 +239,18 @@ end)
 
 lib.callback.register('mani-housing:server:PurchaseHouse', function(Source, HouseId)
     local House = HouseCache[HouseId]
-    if not House then return end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
-    if House.State ~= 0 then return end
+    if House.State ~= 0 then return false, locale('Notify.HouseNotForSale') end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return end
+    if not PlayerData then return false, locale('Notify.GenericError') end
 
     local SalesData = House.SalesData
     local SellerJob = SalesData.SalesmanJob
     local Price = SalesData.Price
 
-    if not exports['mani-bridge']:RemoveMoneyAuto(Source, { 'money', 'bank' }, Price) then return false, 'no hablo money' end
+    if not exports['mani-bridge']:RemoveMoneyAuto(Source, { 'money', 'bank' }, Price) then return false, locale('Notify.CannotAfford') end
 
     if House.Owner ~= '' then
         exports['mani-bridge']:AddMoneyOffline(House.Owner, 'bank', Price)
@@ -263,42 +263,42 @@ end)
 
 lib.callback.register('mani-housing:server:PlaceWardrobe', function(Source, Data)
     local House = HouseCache[Data.HouseId]
-    if not House then return end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return end
+    if not PlayerData then return false, locale('Notify.GenericError') end
 
-    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
 
     House:PlaceWardrobe(Data.PlayerCoords)
 end)
 
 lib.callback.register('mani-housing:server:PlaceStash', function(Source, Data)
     local House = HouseCache[Data.HouseId]
-    if not House then return end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return end
+    if not PlayerData then return false, locale('Notify.GenericError') end
 
-    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, 'no access' end
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
 
     House:PlaceStash(Data.PlayerCoords)
 end)
 
 lib.callback.register('mani-housing:server:RegisterStash', function(Source, HouseId)
     local House = HouseCache[HouseId]
-    if not House then return false, 'du dum' end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return false, 'ewor' end
+    if not PlayerData then return false, locale('Notify.GenericError') end
 
-    if not House:HasAccess(PlayerData.Identifier, 'Stash') then return false, 'no access' end
+    if not House:HasAccess(PlayerData.Identifier, 'Stash') then return false, locale('Notify.NoPermission') end
 
     local ShellIndex = Config.ShellIndexes[House.Shell]
-    if not ShellIndex then return false, 'Shell not exist' end
+    if not ShellIndex then return false, locale('Notify.ShellNotExist') end
     local Shell = Config.Shells[ShellIndex]
 
-    exports['mani-bridge']:RegisterStash(('housestash_%s'):format(House.HouseId), 'House Stash', Shell.Stash.Slots, Shell.Stash.Weight)
+    exports['mani-bridge']:RegisterStash(('housestash_%s'):format(House.HouseId), locale('Misc.StashName'), Shell.Stash.Slots, Shell.Stash.Weight)
 
     return true
 end)
@@ -319,14 +319,14 @@ lib.callback.register('mani-housing:server:UpdateGarage', function(Source, Data)
     local HouseId = Data.HouseId
     local Coords = Data.Coords
 
-    if not HouseId or not Coords then return false, 'ewor' end
+    if not HouseId or not Coords then return false, locale('Notify.GenericError') end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return false, 'no playerdata' end
-    if not Config.WhitelistedJobs[PlayerData.Job.Name] then return false, 'Error No ablo job' end
+    if not PlayerData then return false, locale('Notify.GenericError') end
+    if not Config.WhitelistedJobs[PlayerData.Job.Name] then return false, locale('Notify.NoPermission') end
 
     local House = HouseCache[HouseId]
-    if not House then return end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
     House:SetGarage(Coords)
 
@@ -335,11 +335,11 @@ end)
 
 lib.callback.register('mani-housing:server:RemoveHouse', function(Source, HouseId)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-    if not PlayerData then return false, 'no playerdata' end
-    if not Config.WhitelistedJobs[PlayerData.Job.Name] and not Config.Debug then return false, 'Error No ablo job' end
+    if not PlayerData then return false, locale('Notify.GenericError') end
+    if not Config.WhitelistedJobs[PlayerData.Job.Name] and not Config.Debug then return false, locale('Notify.NoPermission') end
 
     local House = HouseCache[HouseId]
-    if not House then return false, 'no house' end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
     House:Remove()
 
@@ -350,10 +350,10 @@ lib.callback.register('mani-housing:server:SellHouse', function(Source, Data)
     local HouseId = Data.HouseId
     local Price = Data.Price
 
-    if not HouseId or not Price then return false, 'ewor' end
+    if not HouseId or not Price then return false, locale('Notify.GenericError') end
 
     local House = HouseCache[HouseId]
-    if not House then return false, 'no hablo house' end
+    if not House then return false, locale('Notify.HouseNotExist') end
 
     House:Sell(Price)
 

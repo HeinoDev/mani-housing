@@ -10,27 +10,15 @@ local JobCache = {}
 
 lib.locale()
 
-RegisterCommand(Config.Commands['HouseInteraction'], function()
-    local HouseIndex = cache.currentHouse or cache.inHouse
-    if not HouseIndex then return end
-    
-    local House = HouseCache[HouseIndex]
-    if not House then return end
+local function HasAccess(HouseId, Identifier, Key)
+    local House = type(HouseId) == 'table' and HouseId or HouseCache[HouseId]
+    if not House then return false end
 
-    local PlayerData = exports['mani-bridge']:GetPlayerData()
-    if not PlayerData then return end
+    local IsOwner = House.Owner == Identifier
+    local HasKey = House.Keyholders[Identifier] and House.Keyholders[Identifier].Permissions[Key or 'Enter']
 
-    local IsOwner = House.Owner == PlayerData.Identifier
-    local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier].Permissions['Enter']
-
-    if not IsOwner and not HasKey then return end
-
-    SetNuiFocus(true, true)
-    SendNUIMessage({
-        action = "OpenHouseInteraction",
-        data = House
-    })
-end, false)
+    return IsOwner or HasKey
+end
 
 local function Draw3DText(x, y, z, text)
     local onScreen, _x, _y = World3dToScreen2d(x, y, z)
@@ -187,6 +175,7 @@ end
 local function SeeOffer(HouseId)
     local House = HouseCache[HouseId]
     if not House then return end
+    if House.State ~= 0 then return end
 
     SetNuiFocus(true, true)
     SendNUIMessage({
@@ -218,10 +207,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
             self.Estate = House.State == 0 and self.PlayerData.Identifier ~= House.Owner
 
             if not self.Estate then
-                local IsOwner = House.Owner == self.PlayerData.Identifier
-                local HasKey = House.Keyholders[self.PlayerData.Identifier] and House.Keyholders[self.PlayerData.Identifier].Permissions['Enter']
-
-                if not IsOwner and not HasKey then return end
+                if not HasAccess(House, self.PlayerData.Identifier, 'Enter') then return end
 
                 if cache.currentHouse then
                     local CurrentHouseCoords = HouseCache[cache.currentHouse].Coords.Entrance
@@ -273,10 +259,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
                 local PlayerData = exports['mani-bridge']:GetPlayerData()
                 if not PlayerData then return end
 
-                local IsOwner = House.Owner == PlayerData.Identifier
-                local HasKey = House.Keyholders[PlayerData.Identifier] and House.Keyholders[PlayerData.Identifier].Permissions['Garage']
-
-                self.HasAcess = IsOwner or HasKey
+                self.HasAcess = HasAccess(House, self.PlayerData.Identifier, 'Garage')
             end,
             nearby = function(self)
                 if not self.HasAcess then return end
@@ -407,10 +390,10 @@ end
 RegisterNetEvent('mani-bridge:client:PlayerLoaded', LoadAllHouses)
 
 CreateThread(function()
-    Wait(400)
-    
     local PlayerData = exports['mani-bridge']:GetPlayerData()
     if not PlayerData then return end
+
+    Wait(400)
 
     LoadAllHouses(PlayerData)
 end)
@@ -438,10 +421,35 @@ CreateThread(function()
     })
 end)
 
-RegisterCommand(Config.Commands['RealEstate'], function()
+RegisterCommand(Config.Commands['HouseInteraction'], function()
+    local HouseIndex = cache.currentHouse or cache.inHouse
+    if not HouseIndex then return end
+    
+    local House = HouseCache[HouseIndex]
+    if not House then return end    
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData()
+    if not PlayerData then return end
+
+    if not HasAccess(House, PlayerData.Identifier, 'Admin') then return end
+
     SetNuiFocus(true, true)
     SendNUIMessage({
-        action = "OpenRealestate",
+        action = 'OpenHouseInteraction',
+        data = House
+    })
+end, false)
+
+RegisterCommand(Config.Commands['RealEstate'], function()
+    local PlayerData = exports['mani-bridge']:GetPlayerData()
+    if not PlayerData then return end
+
+    local Job = PlayerData.Job.Name
+    if not Config.WhitelistedJobs[Job] then return end
+
+    SetNuiFocus(true, true)
+    SendNUIMessage({
+        action = 'OpenRealestate',
         data = HouseCache
     })
 end, false)
@@ -449,23 +457,18 @@ end, false)
 RegisterNUICallback('ViewLocation', function(HouseId, cb)
     SetNuiFocus(false, false)
 
+    local PlayerData = exports['mani-bridge']:GetPlayerData()
+    if not PlayerData then return end
+
+    local Job = PlayerData.Job.Name
+    if not Config.WhitelistedJobs[Job] then return end
+
     local House = HouseCache[HouseId]
     if not House then return end
 
     SetNewWaypoint(House.Coords.Entrance.x, House.Coords.Entrance.y)
 
     cb({})
-end)
-
-RegisterNUICallback('GiveKeys', function(Players, cb)
-    local HouseId = cache.currentHouse or cache.inHouse
-    if not HouseId then return end
-    local Success, Message = lib.callback.await('mani-housing:server:GiveKeys', false, Players, HouseId)
-
-    cb({
-        Success = Success,
-        Keyholders = HouseCache[HouseId].Keyholders
-    })
 end)
 
 RegisterNUICallback('RealEstateMode', function(_, cb)
@@ -536,3 +539,5 @@ RegisterNetEvent('mani-housing:client:UpdatePoint', function(Coords, Point)
         end
     })
 end)
+
+exports('HasAccess', HasAccess)

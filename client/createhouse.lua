@@ -42,7 +42,7 @@ RegisterNUICallback('CreateHouse', function(Data, cb)
         action = 'HideUI'
     })
 
-    local Success, Error = lib.callback.await('mani-housing:server:CreateHouse', false, {
+    local Success, Message = lib.callback.await('mani-housing:server:CreateHouse', false, {
         Shell = Data.shell,
         HasGarage = Data.includeGarage,
         Price = Data.price,
@@ -50,6 +50,7 @@ RegisterNUICallback('CreateHouse', function(Data, cb)
         Garage = GarageCoords,
         Zone = zone
     })
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
 end)
 
 RegisterNUICallback('SetGarage', function(HouseId, cb)
@@ -75,16 +76,16 @@ RegisterNUICallback('SetGarage', function(HouseId, cb)
 
     local GarageCoords = vec4(PlayerCoords.xyz, PlayerHeading)
 
-    local success, error = lib.callback.await('mani-housing:server:UpdateGarage', false, {
+    local Success, Message = lib.callback.await('mani-housing:server:UpdateGarage', false, {
         Coords = GarageCoords,
         HouseId = HouseId
     })
 
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
     SendNUIMessage({
         action = 'HideUI'
     })
-
-    -- notify
 
     cb({})
 end)
@@ -92,9 +93,8 @@ end)
 RegisterNUICallback('RemoveHouse', function(HouseId, cb)
     SetNuiFocus(false, false)
 
-    local Success, Error = lib.callback.await('mani-housing:server:RemoveHouse', false, HouseId)
-
-    -- notify
+    local Success, Message = lib.callback.await('mani-housing:server:RemoveHouse', false, HouseId)
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
 
     cb({})
 end)
@@ -102,9 +102,8 @@ end)
 RegisterNUICallback('SellHouse', function(Data, cb)
     SetNuiFocus(false, false)
 
-    local Success, Error = lib.callback.await('mani-housing:server:SellHouse', false, Data)
-
-    -- notify
+    local Success, Message = lib.callback.await('mani-housing:server:SellHouse', false, Data)
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
 
     cb({})
 end)

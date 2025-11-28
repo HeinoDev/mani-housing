@@ -9,41 +9,59 @@ RegisterNUICallback('GetNearbyPlayers', function(_, cb)
 end)
 
 RegisterNUICallback('UpdateKeyPermissions', function(Data, cb)
-    local Sucess, Message = lib.callback.await('mani-housing:server:UpdatePermissions', false, Data)
+    local Success, Message = lib.callback.await('mani-housing:server:UpdatePermissions', false, Data)
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
     cb({})
 end)
 
 RegisterNUICallback('RemoveKeyholder', function(Data, cb)
-    local Sucess, Message = lib.callback.await('mani-housing:server:RemoveKeyholder', false, Data)
+    local Success, Message = lib.callback.await('mani-housing:server:RemoveKeyholder', false, Data)
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
     cb({
-        Success = Sucess
+        Success = Success
     })
 end)
 
 RegisterNUICallback('PurchaseHouse', function(HouseId, cb)
-    local Sucess, Message = lib.callback.await('mani-housing:server:PurchaseHouse', false, HouseId)
     SetNuiFocus(false, false)
+    local Success, Message = lib.callback.await('mani-housing:server:PurchaseHouse', false, HouseId)
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
     cb({})
 end)
 
 RegisterNUICallback('PlaceWardrobe', function(_, cb)
+    SetNuiFocus(false, false)
     local HouseId = cache.inHouse
     if not HouseId then return end
-    local Sucess, Message = lib.callback.await('mani-housing:server:PlaceWardrobe', false, {
+    local Success, Message = lib.callback.await('mani-housing:server:PlaceWardrobe', false, {
         HouseId = HouseId,
         PlayerCoords = GetEntityCoords(cache.ped)
     })
-    SetNuiFocus(false, false)
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
     cb({})
 end)
 
 RegisterNUICallback('PlaceStash', function(HouseId, cb)
+    SetNuiFocus(false, false)
     local HouseId = cache.inHouse
     if not HouseId then return end
-    local Sucess, Message = lib.callback.await('mani-housing:server:PlaceStash', false, {
+    local Success, Message = lib.callback.await('mani-housing:server:PlaceStash', false, {
         HouseId = HouseId,
         PlayerCoords = GetEntityCoords(cache.ped)
     })
-    SetNuiFocus(false, false)
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
     cb({})
+end)
+
+RegisterNUICallback('GiveKeys', function(Players, cb)
+    local HouseId = cache.currentHouse or cache.inHouse
+    if not HouseId then return end
+    local Success, Message = lib.callback.await('mani-housing:server:GiveKeys', false, Players, HouseId)
+
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
+    cb({
+        Success = Success,
+        Keyholders = HouseCache[HouseId].Keyholders
+    })
 end)

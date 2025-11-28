@@ -1,3 +1,13 @@
 {
-    "Dinmor": "Dinmor"
+    "Notify": {
+        "Error": "Error",
+        "HouseNotExist": "The house does not exist.",
+        "ShellNotExist": "House shell doesn't exist, contact staff.",
+        "GenericError": "Something wen't wrong.",
+        "NoPermission": "You do not have permission to perform this action.",
+        "CannotAfford": "You cannot afford to do this."
+    },
+    "Misc": {
+        "StashName": "House Stash",
+    }
 }

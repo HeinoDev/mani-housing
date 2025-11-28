@@ -18,9 +18,11 @@ end
 
 function Util.OpenStash(House)
     if not exports['mani-bridge']:OpenInventory('stash', ('housestash_%s'):format(House.HouseId)) then
-        local Success = lib.callback.await('mani-housing:server:RegisterStash', false, House.HouseId)
+        local Success, Message = lib.callback.await('mani-housing:server:RegisterStash', false, House.HouseId)
         if Success then
             exports['mani-bridge']:OpenInventory('stash', ('housestash_%s'):format(House.HouseId))
+        else
+            exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000)
         end
     end
 end
