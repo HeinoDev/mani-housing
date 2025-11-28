@@ -480,20 +480,15 @@ function HouseClass:SetGarage(Coords)
 end
 
 function HouseClass:Remove()
-    print(1)
-
     MySQL.query.await('DELETE FROM mani_houses WHERE houseid = ?', {
         self.HouseId
     })
-    print(2)
 
     for Identifier, Data in pairs(self.Keyholders) do
         self:RemoveKeyholder(Identifier, true)
     end
-    print(3)
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Remove')
-    print(4)
 
     self = nil
 end
@@ -534,3 +529,25 @@ function HouseClass:RunAction(Action)
         if State then Action(Source) end
     end
 end
+
+exports('GetHouse', function(HouseId) return HouseCache[HouseId] end)
+
+exports('GetHouses', function() return HouseCache end)
+
+exports('GetPlayerHouses', function(Identifier, ReturnByIndex)
+    if type(Identifier) == 'number' then
+        local PlayerData = exports['mani-bridge']:GetPlayerData(Identifier)
+        if not PlayerData then return {} end
+        Identifier = PlayerData.Identifier
+    end
+
+    local Houses = {}
+
+    for HouseId, House in pairs(HouseCache) do
+        if House.Owner == Identifier or House.Keyholders[Identifier] then
+            Houses[ReturnByIndex and HouseId or #Houses + 1] = House
+        end
+    end
+
+    return Houses
+end)

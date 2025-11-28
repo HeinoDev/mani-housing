@@ -1,5 +1,7 @@
 local Util = {}
 
+local Webhook = ''
+
 function Util.InDistance(House) -- When the player is near a house.
     
 end
@@ -27,4 +29,12 @@ function Util.OpenStash(House)
     end
 end
 
-return Util 
+function Util.Log(Source, Message)
+    exports['mani-bridge']:DiscordWebhook(Source, {
+        Webhook = Webhook,
+        Resource = 'Mani-Housing',
+        Message = Message
+    })
+end
+
+return Util

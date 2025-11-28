@@ -5,7 +5,8 @@
         "ShellNotExist": "House shell doesn't exist, contact staff.",
         "GenericError": "Something wen't wrong.",
         "NoPermission": "You do not have permission to perform this action.",
-        "CannotAfford": "You cannot afford to do this."
+        "CannotAfford": "You cannot afford to do this.",
+        "HouseNotForSale": "This house is not for sale.",
     },
     "Misc": {
         "StashName": "House Stash",

@@ -541,3 +541,23 @@ RegisterNetEvent('mani-housing:client:UpdatePoint', function(Coords, Point)
 end)
 
 exports('HasAccess', HasAccess)
+
+exports('GetHouse', function(HouseId) return HouseCache[HouseId] end)
+
+exports('GetHouses', function() return HouseCache end)
+
+exports('GetPlayerHouses', function(ReturnByIndex)
+    local PlayerData = exports['mani-bridge']:GetPlayerData()
+    if not PlayerData then return {} end
+    local Identifier = PlayerData.Identifier
+
+    local Houses = {}
+
+    for HouseId, House in pairs(HouseCache) do
+        if House.Owner == Identifier or House.Keyholders[Identifier] then
+            Houses[ReturnByIndex and HouseId or #Houses + 1] = House
+        end
+    end
+
+    return Houses
+end)
