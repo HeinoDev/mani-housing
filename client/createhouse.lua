@@ -13,7 +13,7 @@ RegisterNUICallback('CreateHouse', function(Data, cb)
 
     local EntranceCoords = vec4(PlayerCoords.xyz, PlayerHeading)
 
-    local zone = GetLabelText(GetNameOfZone(EntranceCoords.xyz)) or 'Unknown'
+    local Zone = GetLabelText(GetNameOfZone(EntranceCoords.xyz)) or 'Unknown'
 
     local GarageCoords = nil
 
@@ -22,7 +22,7 @@ RegisterNUICallback('CreateHouse', function(Data, cb)
             action = 'ChangeGuide',
             data = {
                 Key = 'E',
-                Text = 'to select garage'
+                Text = locale('UI.SelectGarage')
             }
         })
 
@@ -48,7 +48,7 @@ RegisterNUICallback('CreateHouse', function(Data, cb)
         Price = Data.price,
         Entrance = EntranceCoords,
         Garage = GarageCoords,
-        Zone = zone
+        Zone = Zone
     })
     if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
 end)
@@ -59,7 +59,7 @@ RegisterNUICallback('SetGarage', function(HouseId, cb)
         action = 'ChangeGuide',
         data = {
             Key = 'E',
-            Text = 'to select garage'
+            Text = locale('UI.SelectGarage')
         }
     })
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Houses, visibilityStore as visibility, Current } from "$lib/stores/VisibilityStore";
+    import { Houses, visibilityStore as visibility, Current, Locales } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
     export let houseId: string;
     $: house = $Houses[houseId];
@@ -25,7 +25,7 @@
     <div class="w-[500px] max-h-[80vh] bg-[#121212] rounded-md shadow-2xl flex flex-col border border-[#333333]">
         <header class="bg-[#1a1a1a] border-b border-[#333333] px-2 py-2 flex justify-between items-center flex-shrink-0">
             <div class="flex items-center">
-                <h1 class="text-white font-medium text-sm">Edit Property</h1>
+                <h1 class="text-white font-medium text-sm">{$Locales["UI.EditProperty"]}</h1>
             </div>
             <div class="flex items-center gap-2">
                 <button onclick={CloseEditModal} class="text-gray-400 hover:text-white">
@@ -38,41 +38,41 @@
                 {#if house}
                     <div class="bg-[#1a1a1a] rounded-lg p-2 border border-[#333333]">
                         <h3 class="text-white font-medium text-sm mb-1">{house.Coords.Zone}: {house.HouseId}</h3>
-                        <p class="text-gray-400 text-xs">Shell: {house.Shell}</p>
+                        <p class="text-gray-400 text-xs">{$Locales["UI.Shell"]}: {house.Shell}</p>
                         {#if house.SalesData?.OwnerName}
-                            <p class="text-gray-400 text-xs">Owner: {house.SalesData.OwnerName}</p>
+                            <p class="text-gray-400 text-xs">{$Locales["UI.Owner"]}: {house.SalesData.OwnerName}</p>
                         {/if}
                     </div>
                     <div class="bg-[#1a1a1a] rounded-lg p-2 border border-[#333333]">
-                        <h4 class="text-white font-medium text-sm mb-1">Sales Data</h4>
+                        <h4 class="text-white font-medium text-sm mb-1">{$Locales["UI.SalesData"]}</h4>
                         <div class="space-y-1 text-xs text-gray-400">
                             <div class="flex justify-between">
-                                <span>Agent:</span>
+                                <span>{$Locales["UI.Agent"]}:</span>
                                 <span>{house.SalesData?.Salesman || 'N/A'}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span>Salesman Job:</span>
+                                <span>{$Locales["UI.RealEstateJob"]}:</span>
                                 <span>{house.SalesData?.SalesmanJobLabel || 'N/A'}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span>Price:</span>
+                                <span>{$Locales["UI.Price"]}:</span>
                                 <span>${house.SalesData?.Price?.toLocaleString() || '0'}</span>
                             </div>
                         </div>
                     </div>
                 {:else}
-                    <div class="text-center text-gray-400 py-4">House not found</div>
+                    <div class="text-center text-gray-400 py-4">{$Locales["UI.HouseNotFound"]}</div>
                 {/if}
             </div>
             <div class="space-y-2 mt-2 flex-shrink-0">
                 <button onclick={HandleGaragePoint} class="w-full bg-blue-400 text-white py-1 rounded-md text-xs font-medium hover:bg-blue-500 transition-colors" disabled={!house}>
-                    {house?.Coords.Garage ? 'Update' : 'Add'} Garage Point
+                    {house?.Coords.Garage ? $Locales["UI.Update"] : $Locales["UI.Add"]} {$Locales["UI.GaragePoint"]}
                 </button>
                 <button onclick={HandleSellProperty} class="w-full bg-green-600 text-white py-1 rounded-md text-xs font-medium hover:bg-green-800 transition-colors" disabled={!house}>
-                    Sell Property
+                    {$Locales["UI.SellProperty"]}
                 </button>
                 <button onclick={HandleRemoveProperty} class="w-full bg-red-400 text-white py-1 rounded-md text-xs font-medium hover:bg-red-500 transition-colors" disabled={!house}>
-                    Remove Property
+                    {$Locales["UI.RemoveProperty"]}
                 </button>
             </div>
         </div>

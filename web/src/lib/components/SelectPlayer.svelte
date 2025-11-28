@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { NearbyPlayers } from "$lib/stores/VisibilityStore";
+    import { NearbyPlayers, Locales } from "$lib/stores/VisibilityStore";
     import { createEventDispatcher } from 'svelte';
 
     const dispatch = createEventDispatcher();
@@ -30,7 +30,7 @@
 
         <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center">
             <div class="flex items-center">
-                <h1 class="text-white font-medium">Select Players</h1>
+                <h1 class="text-white font-medium">{$Locales["UI.SelectPlayers"]}</h1>
             </div>
             <div class="flex items-center gap-4">
                 <button on:click={CloseCreateModal} class="text-gray-400 hover:text-white">

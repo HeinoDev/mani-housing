@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { visibilityStore as visibility, House, NearbyPlayers, Current } from "$lib/stores/VisibilityStore";
+    import { visibilityStore as visibility, House, NearbyPlayers, Current, Locales } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
     import SelectPlayer from "./components/SelectPlayer.svelte";
 
@@ -97,7 +97,7 @@
     <div class="w-[1000px] h-[700px] bg-[#121212] rounded-lg shadow-2xl flex flex-col overflow-hidden border border-[#333333]">
         <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center">
             <div class="flex items-center">
-                <h1 class="text-white font-medium mr-2">{$House.Coords?.Zone ?? 'Unknown Zone'}:</h1>
+                <h1 class="text-white font-medium mr-2">{$House.Coords?.Zone ?? "Unknown Zone"}:</h1>
                 <h1 class="text-blue-400 font-medium">{$House.HouseId}</h1>
             </div>
             <div class="flex items-center gap-4">
@@ -113,12 +113,12 @@
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-white font-semibold text-lg flex items-center">
                         <i class="fas fa-users text-yellow-400 mr-2"></i>
-                        Keyholders
+                        {$Locales["UI.Keyholders"]}
                     </h2>
                     <div class="flex items-center gap-2">
                         <span class="text-gray-400 text-sm">({Object.keys($House.Keyholders ?? {}).length})</span>
                         <button onclick={addKeyholder} class="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors">
-                            + Add
+                            + {$Locales["UI.Add"]}
                         </button>
                     </div>
                 </div>
@@ -154,7 +154,7 @@
                                             <div class="flex items-center justify-between">
                                                 <label class="text-gray-300 text-xs flex items-center gap-1">
                                                     <i class="fas fa-door-open text-gray-400 w-3 h-3"></i>
-                                                    Enter
+                                                    {$Locales["UI.Enter"]}
                                                 </label>
                                                 <div class="relative flex items-center">
                                                     <input type="checkbox" bind:checked={editingPermissions[identifier].Enter} id="enter-{identifier}" class="sr-only peer" />
@@ -173,7 +173,7 @@
                                             <div class="flex items-center justify-between">
                                                 <label class="text-gray-300 text-xs flex items-center gap-1">
                                                     <i class="fas fa-car text-gray-400 w-3 h-3"></i>
-                                                    Garage
+                                                    {$Locales["UI.Garage"]}
                                                 </label>
                                                 <div class="relative flex items-center">
                                                     <input type="checkbox" bind:checked={editingPermissions[identifier].Garage} id="garage-{identifier}" class="sr-only peer" />
@@ -192,7 +192,7 @@
                                             <div class="flex items-center justify-between">
                                                 <label class="text-gray-300 text-xs flex items-center gap-1">
                                                     <i class="fas fa-key text-gray-400 w-3 h-3"></i>
-                                                    Admin
+                                                    {$Locales["UI.Admin"]}
                                                 </label>
                                                 <div class="relative flex items-center">
                                                     <input type="checkbox" bind:checked={editingPermissions[identifier].Admin} id="admin-{identifier}" class="sr-only peer" />
@@ -214,7 +214,7 @@
                                                 onclick={() => savePermissions(identifier)} 
                                                 class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                                             >
-                                                Save
+                                                {$Locales["UI.Save"]}
                                             </button>
                                         </div>
                                     </div>
@@ -231,14 +231,14 @@
                     <div class="bg-[#1a1a1a] rounded-lg border border-[#333333] p-4 flex flex-col">
                         <h2 class="text-white font-semibold mb-4 text-lg flex items-center">
                             <i class="fas fa-chart-line text-green-400 mr-2"></i>
-                            Sales Data
+                            {$Locales["UI.SalesData"]}
                         </h2>
                         <div class="space-y-3 text-sm">
                             <div class="bg-[#1e1e1e] rounded-md border border-[#333333] p-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-gray-400 flex items-center gap-1">
                                         <i class="fas fa-tag w-4 h-4"></i>
-                                        Price
+                                        {$Locales["UI.Price"]}
                                     </span>
                                     <div class="flex items-center gap-2">
                                         <span class="text-white font-semibold">${$House.SalesData.Price}</span>
@@ -252,7 +252,7 @@
                                 <div class="flex items-center justify-between">
                                     <span class="text-gray-400 flex items-center gap-1">
                                         <i class="fas fa-briefcase w-4 h-4"></i>
-                                        Real Estate Job
+                                            {$Locales["UI.RealEstateJob"]}
                                     </span>
                                     <span class="text-white">{$House.SalesData.SalesmanJobLabel}</span>
                                 </div>
@@ -261,7 +261,7 @@
                                 <div class="flex items-center justify-between">
                                     <span class="text-gray-400 flex items-center gap-1">
                                         <i class="fas fa-user-tie w-4 h-4"></i>
-                                        Agent
+                                        {$Locales["UI.Agent"]}
                                     </span>
                                     <span class="text-white">{$House.SalesData.Salesman}</span>
                                 </div>
@@ -273,20 +273,24 @@
                 <div class="flex-1 bg-[#1a1a1a] rounded-lg border border-[#333333] p-4 flex flex-col">
                     <h2 class="text-white font-semibold mb-4 text-lg flex items-center">
                         <i class="fas fa-cog text-purple-400 mr-2"></i>
-                        Administrate
+                        {$Locales["UI.Administrate"]}
                     </h2>
                     <div class="space-y-3">
                         <button onclick={placeWardrobe} class="w-full bg-[#1e1e1e] border border-[#333333] rounded-md p-3 text-left hover:bg-[#2a2a2a] transition-colors text-sm text-white flex items-center gap-3">
                             <i class="fas fa-tshirt text-purple-400 w-5 h-5"></i>
-                            Place Wardrobe
+                            {$Locales["UI.PlaceWardrobe"]}
                         </button>
                         <button onclick={placeStash} class="w-full bg-[#1e1e1e] border border-[#333333] rounded-md p-3 text-left hover:bg-[#2a2a2a] transition-colors text-sm text-white flex items-center gap-3">
                             <i class="fas fa-box text-purple-400 w-5 h-5"></i>
-                            Place Stash
+                            {$Locales["UI.PlaceStash"]}
                         </button>
-                        <button onclick={startDecorating} class="w-full bg-[#1e1e1e] border border-[#333333] rounded-md p-3 text-left hover:bg-[#2a2a2a] transition-colors text-sm text-white flex items-center gap-3">
+                        <button 
+                            disabled={true}
+                            onclick={startDecorating}
+                            class="w-full bg-[#1e1e1e] border border-[#333333] rounded-md p-3 text-left hover:bg-[#2a2a2a] transition-colors text-sm text-white flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                             <i class="fas fa-couch text-purple-400 w-5 h-5"></i>
-                            Decorate
+                            {$Locales["UI.Decorate"]}
                         </button>
                     </div>
                 </div>

@@ -52,16 +52,3 @@ RegisterNUICallback('PlaceStash', function(HouseId, cb)
     if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
     cb({})
 end)
-
-RegisterNUICallback('GiveKeys', function(Players, cb)
-    local HouseId = cache.currentHouse or cache.inHouse
-    if not HouseId then return end
-    local Success, Message = lib.callback.await('mani-housing:server:GiveKeys', false, Players, HouseId)
-
-    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
-
-    cb({
-        Success = Success,
-        Keyholders = HouseCache[HouseId].Keyholders
-    })
-end)

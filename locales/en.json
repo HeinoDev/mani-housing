@@ -19,5 +19,70 @@
     },
     "Misc": {
         "StashName": "House Stash",
+    },
+    "UI": {
+        "RealEstate": "Real Estate",
+        "JobMode": "Real Estate Mode",
+        "Houses": "Houses",
+        "OnlyInactive": "Only Inactive",
+        "CreateHouse": "Create House",
+        "Owner": "Owner",
+        "Shell": "Shell",
+        "Garage": "Garage",
+        "Wardrobe": "Wardrobe",
+        "Stash": "Stash",
+        "SearchHouses": "Search Houses",
+
+        "Keyholders": "Keyholders",
+        "Add": "Add",
+        "RemoveKeyholder": "Remove Keyholder",
+        "Enter": "Enter",
+        "Admin": "Admin",
+        "Save": "Save",
+        "SalesData": "Sales Data",
+        "Price": "Price",
+        "RealEstateJob": "Real Estate Job",
+        "Agent": "Agent",
+        "Administrate": "Administrate",
+        "PlaceWardrobe": "Place Wardrobe",
+        "PlaceStash": "Place Stash",
+        "Decorate": "Decorate",
+
+        "SelectPlayers": "Select Players",
+
+        "HouseInformation": "House Information",
+        "SignTheOffer": "Sign the Offer",
+        "SignOfferConfirm": "Are you sure you want to sign this offer?",
+
+        "RemoveHouseConfirm": "Are you sure you want to remove this house?",
+
+        "Furniture": "Furniture",
+        "SearchResults": "Search Results",
+        "Model": "Model",
+        "Place": "Place",
+        "NoFurnitureFound": "No furniture found.",
+
+        "EnterThePrice": "Enter the price",
+        "SetPrice": "Set Price",
+        "EnterPrice": "Enter price...",
+        "Cancel": "Cancel",
+        "Confirm": "Confirm",
+
+        "SelectEntrance": "to select entrance",
+        "SelectGarage": "to select entrance",
+        "Press": "Press",
+
+        "EditProperty": "Edit Property",
+        "HouseNotFound": "House not found.",
+        "Update": "Update",
+        "GaragePoint": "Garage Point",
+        "SellProperty": "Sell Property",
+        "RemoveProperty": "Remove Property",
+
+        "ChooseShell": "Choose Shell",
+        "IncludeGarage": "Include Garage",
+        "Create": "Create",
+
+        "AreYouSure": "Are you sure?"
     }
 }

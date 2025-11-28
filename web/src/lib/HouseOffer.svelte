@@ -1,5 +1,5 @@
 <script>
-    import { visibilityStore as visibility, House } from "$lib/stores/VisibilityStore";
+    import { visibilityStore as visibility, House, Locales } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
     import Confirm from "./components/Confirm.svelte";
 
@@ -41,11 +41,11 @@
 
         <main class="p-4">
             <div class="mb-4">
-                <h2 class="text-white font-semibold mb-2">House Information</h2>
+                <h2 class="text-white font-semibold mb-2">{$Locales["UI.HouseInformation"]}</h2>
                 <div class="bg-[#1a1a1a] rounded-md border border-[#333333] p-3">
                     <div class="text-sm">
                         <div class="flex justify-between mb-1">
-                            <span class="text-gray-400">Shell:</span>
+                            <span class="text-gray-400">{$Locales["UI.Shell"]}:</span>
                             <span class="text-white">{$House.Shell}</span>
                         </div>
                     </div>
@@ -54,18 +54,18 @@
 
             {#if $House.SalesData}
                 <div class="mb-4">
-                    <h2 class="text-white font-semibold mb-2">Sales Data</h2>
+                    <h2 class="text-white font-semibold mb-2">{$Locales["UI.SalesData"]}</h2>
                     <div class="bg-[#1a1a1a] rounded-md border border-[#333333] p-3 space-y-2">
                         <div class="flex justify-between">
-                            <span class="text-gray-400">Price:</span>
+                            <span class="text-gray-400">{$Locales["UI.Price"]}:</span>
                             <span class="text-white font-semibold">${$House.SalesData.Price}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-400">Real Estate Job:</span>
+                            <span class="text-gray-400">{$Locales["UI.RealEstateJob"]}:</span>
                             <span class="text-white">{$House.SalesData.SalesmanJobLabel}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-400">Agent:</span>
+                            <span class="text-gray-400">{$Locales["UI.Agent"]}:</span>
                             <span class="text-white">{$House.SalesData.Salesman}</span>
                         </div>
                     </div>
@@ -77,7 +77,7 @@
                     onclick={signOffer}
                     class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                 >
-                    Sign the Offer
+                    {$Locales["UI.SignTheOffer"]}
                 </button>
             </div>
         </main>
@@ -85,7 +85,7 @@
 </div>
 
 {#if showConfirm}
-    <Confirm on:confirm={handleConfirm} message="Are you sure you want to sign this offer?" />
+    <Confirm on:confirm={handleConfirm} message={$Locales["UI.SignOfferConfirm"]} />
 {/if}
 
 <style>

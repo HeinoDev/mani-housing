@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { visibilityStore as visibility, Current, Houses } from "$lib/stores/VisibilityStore";
+    import { visibilityStore as visibility, Current, Houses, Locales } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
     import CreateModal from "./components/CreateModal.svelte";
     import EditModal from "./components/EditModal.svelte";
@@ -100,11 +100,11 @@
     <div class="w-[800px] h-[560px] bg-[#121212] rounded-md shadow-2xl flex flex-col overflow-hidden border border-[#333333]">
         <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center">
             <div class="flex items-center">
-                <h1 class="text-white font-medium">Real Estate</h1>
+                <h1 class="text-white font-medium">{$Locales["UI.RealEstate"]}</h1>
             </div>
             <div class="flex items-center gap-4">
                 <button onclick={RealEstateMode} class="bg-purple-400 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-purple-500 transition-colors">
-                    Real Estate Mode
+                    {$Locales["UI.JobMode"]}
                 </button>
                 <button onclick={CloseUI} class="text-gray-400 hover:text-white" title="Close">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -114,11 +114,11 @@
         <div class="bg-[#1e1e1e] border-b border-[#333333] px-4 py-2">
             <div class="flex items-center">
                 <div class="flex items-center gap-2 mr-auto">
-                    <span class="text-gray-400 text-sm">Houses:</span>
+                    <span class="text-gray-400 text-sm">{$Locales["UI.Houses"]}:</span>
                     <span class="text-blue-400 font-medium">{filteredHouses.length}</span>
                 </div>
                 <div class="flex-1 flex justify-center px-4">
-                    <input bind:value={searchTerm} placeholder="Search houses..." class="bg-[#333333] text-white px-3 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 w-full max-w-md" />
+                    <input bind:value={searchTerm} placeholder={$Locales["UI.SearchHouses"]} class="bg-[#333333] text-white px-3 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 w-full max-w-md" />
                 </div>
                 <div class="flex items-center gap-4 ml-auto">
                     <div class="flex items-center gap-2">
@@ -135,10 +135,10 @@
                                 </div>
                             </label>
                         </div>
-                        <span class="text-xs text-gray-400">Only Inactive</span>
+                        <span class="text-xs text-gray-400">{$Locales["UI.OnlyInactive"]}</span>
                     </div>
                     <button onclick={CreateHouse} class="bg-blue-400 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-blue-500 transition-colors">
-                        Create House
+                        {$Locales["UI.CreateHouse"]}
                     </button>
                 </div>
             </div>
@@ -162,20 +162,20 @@
                             </div>
                         </div>
                         {#if item.house.SalesData?.OwnerName}
-                            <p class="text-gray-400 text-xs mb-3">Owner: {item.house.SalesData.OwnerName}</p>
+                            <p class="text-gray-400 text-xs mb-3">{$Locales["UI.Owner"]}: {item.house.SalesData.OwnerName}</p>
                         {/if}
-                        <p class="text-gray-400 text-xs mb-3">Shell: {item.house.Shell}</p>
+                        <p class="text-gray-400 text-xs mb-3">{$Locales["UI.Shell"]}: {item.house.Shell}</p>
                         <div class="flex-1"></div>
                         <div class="flex justify-between items-center space-y-2">
                             <div class="flex flex-wrap gap-1">
                                 {#if item.house.Coords.Garage}
-                                    <span class="bg-gray-700 text-xs px-2 py-1 rounded">Garage</span>
+                                    <span class="bg-gray-700 text-xs px-2 py-1 rounded">{$Locales["UI.Garage"]}</span>
                                 {/if}
                                 {#if item.house.Coords.Wardrobe}
-                                    <span class="bg-gray-700 text-xs px-2 py-1 rounded">Wardrobe</span>
+                                    <span class="bg-gray-700 text-xs px-2 py-1 rounded">{$Locales["UI.Wardrobe"]}</span>
                                 {/if}
                                 {#if item.house.Coords.Stash}
-                                    <span class="bg-gray-700 text-xs px-2 py-1 rounded">Stash</span>
+                                    <span class="bg-gray-700 text-xs px-2 py-1 rounded">{$Locales["UI.Stash"]}</span>
                                 {/if}
                             </div>
                             <span class="text-green-400 text-sm font-medium">${item.house.SalesData?.Price?.toLocaleString() || '0'}</span>

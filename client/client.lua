@@ -417,7 +417,10 @@ CreateThread(function()
 
     SendNUIMessage({
         action = "InitializeUI",
-        data = Config
+        data = {
+            Config = Config,
+            Locales = lib.getLocales()
+        }
     })
 end)
 
@@ -453,6 +456,19 @@ RegisterCommand(Config.Commands['RealEstate'], function()
         data = HouseCache
     })
 end, false)
+
+RegisterNUICallback('GiveKeys', function(Players, cb)
+    local HouseId = cache.currentHouse or cache.inHouse
+    if not HouseId then return end
+    local Success, Message = lib.callback.await('mani-housing:server:GiveKeys', false, Players, HouseId)
+
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
+    cb({
+        Success = Success,
+        Keyholders = HouseCache[HouseId].Keyholders
+    })
+end)
 
 RegisterNUICallback('ViewLocation', function(HouseId, cb)
     SetNuiFocus(false, false)

@@ -1,6 +1,6 @@
 <!-- CreateModal.svelte -->
 <script lang="ts">
-    import { Config } from "$lib/stores/VisibilityStore";
+    import { Config, Locales } from "$lib/stores/VisibilityStore";
     import { createEventDispatcher } from 'svelte';
    
     const dispatch = createEventDispatcher();
@@ -29,7 +29,7 @@
 
         <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center">
             <div class="flex items-center">
-                <h1 class="text-white font-medium">Create House</h1>
+                <h1 class="text-white font-medium">{$Locales["UI.CreateHouse"]}</h1>
             </div>
             <div class="flex items-center gap-4">
                 <button on:click={CloseCreateModal} class="text-gray-400 hover:text-white">
@@ -41,7 +41,7 @@
         <div class="flex-1 p-6 overflow-y-auto">
             <div class="space-y-6">
                 <div>
-                    <label class="block text-gray-300 text-sm font-medium mb-2">Choose Shell</label>
+                    <label class="block text-gray-300 text-sm font-medium mb-2">{$Locales["UI.ChooseShell"]}</label>
                     <div class="relative">
                         <select bind:value={selectedShell} class="w-full bg-[#1e1e1e] border border-[#333333] rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none cursor-pointer">
                             {#each $Config.Shells as shell}
@@ -56,7 +56,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-gray-300 text-sm font-medium mb-2">Price</label>
+                    <label class="block text-gray-300 text-sm font-medium mb-2">{$Locales["UI.Price"]}</label>
                     <input type="number" bind:value={price} min="0" class="w-full bg-[#1e1e1e] border border-[#333333] rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Enter price">
                 </div>
                 <div class="flex items-center space-x-3">
@@ -73,14 +73,14 @@
                             </div>
                         </label>
                     </div>
-                    <label for="garage" class="text-gray-300 text-sm cursor-pointer select-none">Include Garage</label>
+                    <label for="garage" class="text-gray-300 text-sm cursor-pointer select-none">{$Locales["UI.IncludeGarage"]}</label>
                 </div>
             </div>
         </div>
 
         <div class="bg-[#1e1e1e] border-t border-[#333333] px-6 py-4 flex justify-end">
             <button on:click={HandleSubmit} disabled={!selectedShell || price <= 0} class="bg-blue-400 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                Create
+                {$Locales["UI.Create"]}
             </button>
         </div>
 

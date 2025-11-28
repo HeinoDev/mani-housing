@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { visibilityStore as visibility, Config, Current, House, Houses } from "$lib/stores/VisibilityStore";
+	import { visibilityStore as visibility, Config, Current, House, Houses, Locales } from "$lib/stores/VisibilityStore";
 	import { useNuiEvent } from "$lib/hooks/useNuiEvent";
 	import { fetchNui } from "$lib/utils/fetchNui";
 
@@ -53,8 +53,9 @@
 		visibility.hide();
 	});
 
-	useNuiEvent("InitializeUI", (Data: any) => {
-		Config.set(Data);
+	useNuiEvent("InitializeUI", (Data: { Config: any, Locales: any }) => {
+		Config.set(Data.Config);
+		Locales.set(Data.Locales);
 	});
 </script>
 

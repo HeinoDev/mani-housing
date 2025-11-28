@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { visibilityStore as visibility, House } from "$lib/stores/VisibilityStore";
+    import { visibilityStore as visibility, House, Locales } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
     import EditModal from "./components/EditModal.svelte";
     import Confirm from "./components/Confirm.svelte";
@@ -56,7 +56,7 @@
 {/if}
 
 {#if showConfirm}
-    <Confirm on:confirm={handleConfirm} message="Are you sure you want to remove this house?" />
+    <Confirm on:confirm={handleConfirm} message={$Locales["UI.RemoveHouseConfirm"]} />
 {/if}
 
 {#if showInput}

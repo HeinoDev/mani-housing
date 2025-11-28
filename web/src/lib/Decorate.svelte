@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Config } from "$lib/stores/VisibilityStore";
+    import { Config, Locales } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
     import { onMount, onDestroy, tick } from 'svelte';
     let selectedCategory = Object.keys($Config?.Furniture || {})[0] || '';
@@ -145,7 +145,7 @@
             <aside class="w-1/5 min-w-[200px] bg-[#1e1e1e] border-r border-[#333333] flex flex-col h-full rounded-t-md shadow-2xl flex-shrink-0">
                 <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center rounded-t-md">
                     <div class="flex items-center">
-                        <h1 class="text-white font-medium">Furniture</h1>
+                        <h1 class="text-white font-medium">{$Locales["UI.Furniture"]}</h1>
                     </div>
                     <div class="flex items-center gap-4">
                         <button on:click={CloseUI} class="text-gray-400 hover:text-white">
@@ -166,7 +166,7 @@
                         </button>
                     {/each}
                     {#if searchTerm}
-                        <div class="text-blue-400 text-sm px-3 py-2">Search Results ({displayFurniture.length})</div>
+                        <div class="text-blue-400 text-sm px-3 py-2">{$Locales["UI.SearchResults"]} ({displayFurniture.length})</div>
                     {/if}
                 </div>
             </aside>
@@ -187,7 +187,7 @@
                                         <div class="flex-1 mb-2 flex flex-col justify-between">
                                             <div>
                                                 <h3 class="text-white font-medium text-sm mb-1 line-clamp-1">{item.Label}</h3>
-                                                <p class="text-gray-400 text-xs line-clamp-1">Model: {item.Model}</p>
+                                                <p class="text-gray-400 text-xs line-clamp-1">{$Locales["UI.Model"]}: {item.Model}</p>
                                             </div>
                                         </div>
                                         <div class="flex justify-between items-center mt-auto text-sm">
@@ -196,7 +196,7 @@
                                                 on:click={() => placeFurniture(item)}
                                                 class="bg-blue-400 text-white px-3 py-1 rounded-md font-medium hover:bg-blue-500 transition-colors whitespace-nowrap"
                                             >
-                                                Place
+                                                {$Locales["UI.Place"]}
                                             </button>
                                         </div>
                                     </div>
@@ -207,7 +207,7 @@
                         <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#1e1e1e] to-transparent pointer-events-none z-10"></div>
                     </div>
                 {:else}
-                    <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] flex items-center justify-center text-gray-400 text-sm shadow-2xl">No furniture found</div>
+                    <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] flex items-center justify-center text-gray-400 text-sm shadow-2xl">{$Locales["UI.NoFurnitureFound"]}</div>
                 {/if}
             </main>
         </div>
