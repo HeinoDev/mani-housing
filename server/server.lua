@@ -234,6 +234,12 @@ lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, House, 'Update')
 
+    Util.Log(Source, ('[Housing] [%s] | %s created a new house (HouseID: %s)'):format(
+        Source,
+        PlayerData.Character.Firstname,
+        HouseId
+    ))
+
     return HouseId
 end)
 
@@ -259,6 +265,12 @@ lib.callback.register('mani-housing:server:PurchaseHouse', function(Source, Hous
     end
 
     House:SetOwner(PlayerData)
+
+    Util.Log(Source, ('[Housing] [%s] | %s bought a house (HouseID: %s)'):format(
+        Source,
+        PlayerData.Character.Firstname,
+        HouseId
+    ))
 
     return true
 end)
@@ -356,12 +368,23 @@ lib.callback.register('mani-housing:server:SellHouse', function(Source, Data)
     local HouseId = Data.HouseId
     local Price = Data.Price
 
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return false, locale('Notify.GenericError') end
+    if not Config.WhitelistedJobs[PlayerData.Job.Name] and not Config.Debug then return false, locale('Notify.NoPermission') end
+
     if not HouseId or not Price then return false, locale('Notify.GenericError') end
 
     local House = HouseCache[HouseId]
     if not House then return false, locale('Notify.HouseNotExist') end
 
     House:Sell(Price)
+
+    
+    Util.Log(Source, ('[Housing] [%s] | %s sat a house up for sale (HouseID: %s)'):format(
+        Source,
+        PlayerData.Character.Firstname,
+        HouseId
+    ))
 
     return true
 end)
