@@ -8,6 +8,15 @@
         "CannotAfford": "You cannot afford to do this.",
         "HouseNotForSale": "This house is not for sale.",
     },
+    "3DText": {
+        "EnterHouse": "[~g~E~s~] Enter House",
+        "ExitHouse": "[~g~E~s~] Exit House",
+        "Garage": "[~g~E~s~] Garage",
+        "Wardrobe": "[~g~E~s~] Wardrobe",
+        "Stash": "[~g~E~s~] Stash",
+        "SeeOffer": "[~g~E~s~] See Offer",
+        "HouseInformation": "[~g~H~s~] View house information"
+    },
     "Misc": {
         "StashName": "House Stash",
     }

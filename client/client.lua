@@ -126,7 +126,7 @@ local function EnterHouse(Data)
         coords = EnterCoords,
         distance = Config.Distances['Interact'],
         nearby = function(self)
-            Draw3DText(EnterCoords.x, EnterCoords.y, EnterCoords.z + 0.50, 'Klik ~g~E~w~ for at gå ud')
+            Draw3DText(EnterCoords.x, EnterCoords.y, EnterCoords.z + 0.50, locale('3DText.ExitHouse'))
 
             if IsControlJustReleased(0, 38) then
                 ExitHouse(House)
@@ -141,7 +141,7 @@ local function EnterHouse(Data)
             coords = House.Coords.Wardrobe,
             distance = Config.Distances['Interact'],
             nearby = function(self)
-                Draw3DText(House.Coords.Wardrobe.x, House.Coords.Wardrobe.y, House.Coords.Wardrobe.z, 'Klik ~g~E~w~ for at bruge tøjskabet')
+                Draw3DText(House.Coords.Wardrobe.x, House.Coords.Wardrobe.y, House.Coords.Wardrobe.z, locale('3DText.Wardrobe'))
 
                 if IsControlJustReleased(0, 38) then
                     Util.OpenWardrobe()
@@ -157,7 +157,7 @@ local function EnterHouse(Data)
             coords = House.Coords.Stash,
             distance = Config.Distances['Interact'],
             nearby = function(self)
-                Draw3DText(House.Coords.Stash.x, House.Coords.Stash.y, House.Coords.Stash.z, 'Klik ~g~E~w~ for at åbne stash')
+                Draw3DText(House.Coords.Stash.x, House.Coords.Stash.y, House.Coords.Stash.z, locale('3DText.Stash'))
 
                 if IsControlJustReleased(0, 38) then
                     Util.OpenStash(House)
@@ -227,7 +227,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
             local Distance = #(PlayerCoords - HouseCoords)
 
             if Distance < Config.Distances['Interact'] then
-                Draw3DText(HouseCoords.x, HouseCoords.y, HouseCoords.z, self.Estate and 'Klik ~g~E~w~ for at se tilbud' or 'Klik ~g~E~w~ for at gå indenfor')
+                Draw3DText(HouseCoords.x, HouseCoords.y, HouseCoords.z, self.Estate and locale('3DText.SeeOffer') or locale('3DText.EnterHouse'))
 
                 if IsControlJustReleased(0, 38) then
                     if self.Estate then
@@ -264,7 +264,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
             nearby = function(self)
                 if not self.HasAcess then return end
 
-                Draw3DText(GarageCoords.x, GarageCoords.y, GarageCoords.z, 'Klik ~g~E~w~ for at bruge garagen')
+                Draw3DText(GarageCoords.x, GarageCoords.y, GarageCoords.z, locale('3DText.Garage'))
 
                 if IsControlJustReleased(0, 38) then
                     Util.InteractGarage(House)
@@ -342,7 +342,7 @@ local function SetupJobBlips()
                 end
 
                 if self.currentDistance < Config.Distances['Interact'] then
-                    Draw3DText(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z + 0.5, 'Tryk [H] for hus information')
+                    Draw3DText(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z + 0.5, locale('3DText.HouseInformation'))
 
                     if IsControlJustPressed(0, 74) then
                         SetNuiFocus(true, true)
@@ -527,7 +527,7 @@ RegisterNetEvent('mani-housing:client:UpdatePoint', function(Coords, Point)
         coords = Coords,
         distance = Config.Distances['Interact'],
         nearby = function(self)
-            Draw3DText(Coords.x, Coords.y, Coords.z, IsWardrobe and 'Klik ~g~E~w~ for at bruge tøjskabet' or 'Klik ~g~E~w~ for at åbne stashet')
+            Draw3DText(Coords.x, Coords.y, Coords.z, IsWardrobe and locale('3DText.Wardrobe') or locale('3DText.Stash'))
 
             if IsControlJustReleased(0, 38) then
                 if IsWardrobe then
