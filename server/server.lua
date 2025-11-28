@@ -259,6 +259,8 @@ lib.callback.register('mani-housing:server:PurchaseHouse', function(Source, Hous
     end
 
     House:SetOwner(PlayerData)
+
+    return true
 end)
 
 lib.callback.register('mani-housing:server:PlaceWardrobe', function(Source, Data)
@@ -271,6 +273,8 @@ lib.callback.register('mani-housing:server:PlaceWardrobe', function(Source, Data
     if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
 
     House:PlaceWardrobe(Data.PlayerCoords)
+
+    return true
 end)
 
 lib.callback.register('mani-housing:server:PlaceStash', function(Source, Data)
@@ -283,6 +287,8 @@ lib.callback.register('mani-housing:server:PlaceStash', function(Source, Data)
     if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
 
     House:PlaceStash(Data.PlayerCoords)
+
+    return true
 end)
 
 lib.callback.register('mani-housing:server:RegisterStash', function(Source, HouseId)
