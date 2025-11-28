@@ -94,7 +94,7 @@ local function textUILoop()
         while Editing['Prop'] do
             Wait(100)
             lib.showTextUI(
-                ('Current Mode: %s | %s  \n'):format(Editing['Mode'], (Editing['Relative'] and 'Relative') or 'World') ..
+                ('Current Mode: %s | %s  s\n'):format(Editing['Mode'], (Editing['Relative'] and 'Relative') or 'World') ..
                 '[RMB]     - ' .. (Editing['Cursor'] and "Disable" or "Enable") .. ' Cursor  \n' ..
                 '[W]     - Translate Mode  \n' ..
                 '[R]     - Rotate Mode  \n' ..

@@ -3,11 +3,11 @@ game 'gta5'
 lua54 'yes'
 
 author 'ManiMods'
-description 'Trader System'
+description 'Housing System Built For Performance'
 version '1.0.0'
 
-ui_page 'http://localhost:5173/'
--- ui_page 'web/build/index.html'
+-- ui_page 'http://localhost:5173/'
+ui_page 'web/build/index.html'
 
 client_scripts {
     'client/*.lua',
@@ -30,4 +30,10 @@ files {
     'open/dataview.lua',
     'web/build/index.html',
     'web/build/**/*'
+}
+
+escrow_ignore {
+    'config.lua',
+    'locales/*.json',
+    'open/*.lua'
 }
