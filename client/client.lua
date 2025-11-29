@@ -53,9 +53,34 @@ local function CreateBlip(Data)
     return Blip
 end
 
+local function RemoveProps()
+    for i = 1, #InHouse['Models'] do
+        DeleteEntity(InHouse['Models'][i])
+    end
+
+    InHouse['Models'] = {}
+end
+
+local function SpawnProps(Props)
+    for i = 1, #Props do
+        local Decor = Props[i]
+        local ModelHash = Decor.Model
+
+        lib.requestModel(ModelHash)
+
+        local DecorObj = CreateObjectNoOffset(ModelHash, Decor.Position.x, Decor.Position.y, Decor.Position.z, false, false, false)
+        SetEntityRotation(DecorObj, Decor.Rotation.x, Decor.Rotation.y, Decor.Rotation.z, 2, true)
+        FreezeEntityPosition(DecorObj, true)
+
+        SetModelAsNoLongerNeeded(ModelHash)
+
+        InHouse['Models'][#InHouse['Models'] + 1] = DecorObj
+    end
+end
+
 local function ExitHouse(House)
-    if not cache.inHouse then return end
-    cache.inHouse = nil
+    if not cache.InHouse then return end
+    cache.InHouse = nil
 
     lib.callback.await('mani-housing:server:ExitHouse', false, House.HouseId)
 
@@ -70,11 +95,7 @@ local function ExitHouse(House)
     CreateThread(function()
         DeleteEntity(InHouse['ShellModel'])
 
-        for i = 1, #InHouse['Models'] do
-            DeleteEntity(InHouse['Models'][i])
-        end
-
-        InHouse['Models'] = {}
+        RemoveProps()
 
         InHouse['Points']['Exit']:remove()
         if InHouse['Points']['Wardrobe'] then InHouse['Points']['Wardrobe']:remove() end
@@ -83,12 +104,17 @@ local function ExitHouse(House)
         InHouse['Points'] = {}
     end)
 
+    if cache.Decorating then
+        SendNUIMessage({ action = 'HideUi' })
+        cache.Decorating = false
+    end
+
     Wait(500)
     DoScreenFadeIn(500)
 end
 
 local function EnterHouse(Data)
-    if cache.inHouse then return end
+    if cache.InHouse then return end
 
     local PlayerPed = cache.ped
 
@@ -99,7 +125,7 @@ local function EnterHouse(Data)
     if not ShellIndex then lib.print.error("Your shell doesn't exist - Contact support") return end
     local Shell = Config.Shells[ShellIndex]
 
-    cache.inHouse = Data.HouseIndex
+    cache.InHouse = Data.HouseIndex
 
     lib.callback.await('mani-housing:server:EnterHouse', false, Data.HouseIndex)
 
@@ -112,7 +138,7 @@ local function EnterHouse(Data)
     DoScreenFadeOut(500)
     Wait(500)
 
-    local ShellProp = CreateObject(ShellModel, ShellCoords, false, false, false)
+    local ShellProp = CreateObjectNoOffset(ShellModel, ShellCoords, false, false, false)
     FreezeEntityPosition(ShellProp, true)
     InHouse['ShellModel'] = ShellProp
 
@@ -166,20 +192,7 @@ local function EnterHouse(Data)
         })
     end
 
-    for i = 1, #House.Decor do
-        local Decor = House.Decor[i]
-        local ModelHash = Decor.Model
-
-        lib.requestModel(ModelHash)
-
-        local DecorObj = CreateObject(ModelHash, Decor.Position.x, Decor.Position.y, Decor.Position.z - 0.45, false, false, false)
-        SetEntityRotation(DecorObj, Decor.Rotation.x, Decor.Rotation.y, Decor.Rotation.z, 2, true)
-        FreezeEntityPosition(DecorObj, true)
-
-        SetModelAsNoLongerNeeded(ModelHash)
-
-        InHouse['Models'][#InHouse['Models'] + 1] = DecorObj
-    end
+    SpawnProps(House.Decor)
 
     Wait(500)
     DoScreenFadeIn(500)
@@ -224,19 +237,19 @@ local function CreateHouse(HouseIndex, House, PlayerData)
             if not self.Estate then
                 if not HasAccess(House, self.PlayerData.Identifier, 'Enter') then return end
 
-                if cache.currentHouse then
-                    local CurrentHouseCoords = HouseCache[cache.currentHouse].Coords.Entrance
+                if cache.CurrentHouse then
+                    local CurrentHouseCoords = HouseCache[cache.CurrentHouse].Coords.Entrance
 
                     if Distance > #(PlayerCoords - CurrentHouseCoords.xyz) then return end
                 end
                 
                 Util.InDistance(House)
                 
-                cache.currentHouse = HouseIndex
+                cache.CurrentHouse = HouseIndex
             end
         end,
         nearby = function(self)
-            if not self.Estate and cache.currentHouse ~= HouseIndex then return end
+            if not self.Estate and cache.CurrentHouse ~= HouseIndex then return end
 
             local PlayerCoords = GetEntityCoords(self.PlayerPed)
             local Distance = #(PlayerCoords - HouseCoords)
@@ -258,7 +271,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
             end
         end,
         onExit = function(self)
-            if cache.currentHouse == HouseIndex then cache.currentHouse = nil end
+            if cache.CurrentHouse == HouseIndex then cache.CurrentHouse = nil end
         end
     })
 
@@ -440,7 +453,7 @@ CreateThread(function()
 end)
 
 RegisterCommand(Config.Commands['HouseInteraction'], function()
-    local HouseIndex = cache.currentHouse or cache.inHouse
+    local HouseIndex = cache.CurrentHouse or cache.InHouse
     if not HouseIndex then return end
     
     local House = HouseCache[HouseIndex]
@@ -473,7 +486,7 @@ RegisterCommand(Config.Commands['RealEstate'], function()
 end, false)
 
 RegisterNUICallback('GiveKeys', function(Players, cb)
-    local HouseId = cache.currentHouse or cache.inHouse
+    local HouseId = cache.CurrentHouse or cache.InHouse
     if not HouseId then return end
     local Success, Message = lib.callback.await('mani-housing:server:GiveKeys', false, Players, HouseId)
 
@@ -545,31 +558,22 @@ RegisterNetEvent('mani-housing:client:UpdateHouse', function(House, Action)
     elseif Action == 'UpdateDecoration' then
         HouseCache[House.HouseId] = House
 
-        if cache.inHouse == House.HouseId then
-            for i = 1, #InHouse['Models'] do
-                DeleteEntity(InHouse['Models'][i])
-            end
+        if cache.InHouse == House.HouseId then
+            RemoveProps()
+            SpawnProps(House.Decor)
 
-            InHouse['Models'] = {}
-
-            for i = 1, #House.Decor do
-                local Decor = House.Decor[i]
-                local ModelHash = Decor.Model
-
-                lib.requestModel(ModelHash)
-
-                local DecorObj = CreateObject(ModelHash, Decor.Position.x, Decor.Position.y, Decor.Position.z - 0.45, false, false, false)
-                SetEntityRotation(DecorObj, Decor.Rotation.x, Decor.Rotation.y, Decor.Rotation.z, 2, true)
-                FreezeEntityPosition(DecorObj, true)
-
-                InHouse['Models'][#InHouse['Models'] + 1] = DecorObj
+            if cache.Decorating then
+                SendNUIMessage({
+                    action = 'UpdateDecorations',
+                    data = House.Decor
+                })
             end
         end
     end
 end)
 
 RegisterNetEvent('mani-housing:client:UpdatePoint', function(Coords, Point)
-    local HouseId = cache.inHouse
+    local HouseId = cache.InHouse
     if not HouseId then return end
 
     if InHouse['Points'][Point] then InHouse['Points'][Point]:remove() end
@@ -614,4 +618,472 @@ exports('GetPlayerHouses', function(ReturnByIndex)
     end
 
     return Houses
+end)
+
+
+
+
+-- Decoration Editing --
+
+
+
+
+local Keybinds, Editing = {}, { Prop = nil, Cursor = false, Mode = 'translate', Relative = false, Snap = { Active = false, Angle = 15.0, GridSize = 0.5 } }
+
+local dataview = lib.load('open.dataview')
+
+local function MakeEntityMatrix(entity)
+    local f, r, u, a = GetEntityMatrix(entity)
+    local view = dataview.ArrayBuffer(60)
+
+    view:SetFloat32(0, r[1])
+        :SetFloat32(4, r[2])
+        :SetFloat32(8, r[3])
+        :SetFloat32(12, 0)
+        :SetFloat32(16, f[1])
+        :SetFloat32(20, f[2])
+        :SetFloat32(24, f[3])
+        :SetFloat32(28, 0)
+        :SetFloat32(32, u[1])
+        :SetFloat32(36, u[2])
+        :SetFloat32(40, u[3])
+        :SetFloat32(44, 0)
+        :SetFloat32(48, a[1])
+        :SetFloat32(52, a[2])
+        :SetFloat32(56, a[3])
+        :SetFloat32(60, 1)
+
+    return view
+end
+
+local function ApplyEntityMatrix(entity, view)
+    local x1, y1, z1 = view:GetFloat32(16), view:GetFloat32(20), view:GetFloat32(24)
+    local x2, y2, z2 = view:GetFloat32(0), view:GetFloat32(4), view:GetFloat32(8)
+    local x3, y3, z3 = view:GetFloat32(32), view:GetFloat32(36), view:GetFloat32(40)
+    local tx, ty, tz = view:GetFloat32(48), view:GetFloat32(52), view:GetFloat32(56)
+
+    SetEntityMatrix(entity,
+        x1, y1, z1,
+        x2, y2, z2,
+        x3, y3, z3,
+        tx, ty, tz
+    )
+end
+
+local function UseGizmo()
+    if not Editing['Prop'] then return LeaveCursorMode() end
+    local Entity = Editing['Prop']
+    if not Entity or not DoesEntityExist(Entity) then return LeaveCursorMode() end
+
+    EnterCursorMode()
+    Editing['Cursor'] = true
+
+    SetCursorLocation(0.5, 0.5)
+
+    SetEntityDrawOutline(Entity, true)
+    SetEntityDrawOutlineColor(Entity, 255, 255, 0, 255)
+
+    while Editing['Prop'] == Entity and DoesEntityExist(Entity) do
+        DisableControlAction(0, 24, true)  -- lmb
+        DisableControlAction(0, 25, true)  -- rmb
+        DisableControlAction(0, 140, true) -- r
+        DisablePlayerFiring(cache.playerId, true)
+
+        SetEntityCollision(Entity, false, true)
+
+        local matrixBuffer = MakeEntityMatrix(Entity)
+        local changed = DrawGizmo(matrixBuffer:Buffer(), 'Editor2', Citizen.ReturnResultAnyway())
+
+        if changed then
+            ApplyEntityMatrix(Entity, matrixBuffer)
+            if Editing['Snap'].Active then
+                local Pos = GetEntityCoords(Entity)
+                local GridSize = Editing['Snap'].GridSize
+                local SnappedX = (math.floor((Pos.x / GridSize) + 0.5)) * GridSize
+                local SnappedY = (math.floor((Pos.y / GridSize) + 0.5)) * GridSize
+                local SnappedZ = (math.floor((Pos.z / GridSize) + 0.5)) * GridSize
+                SetEntityCoordsNoOffset(Entity, SnappedX, SnappedY, SnappedZ, true, true, true)
+
+                local Rot = GetEntityRotation(Entity, 2)
+                local SnapAngle = Editing['Snap'].Angle
+                local SnappedRotX = (math.floor((Rot.x / SnapAngle) + 0.5)) * SnapAngle
+                local snappedRotY = (math.floor((Rot.y / SnapAngle) + 0.5)) * SnapAngle
+                local snappedRotZ = (math.floor((Rot.z / SnapAngle) + 0.5)) * SnapAngle
+                SetEntityRotation(Entity, SnappedRotX, snappedRotY, snappedRotZ, 2, true)
+            end
+        end
+
+        Wait(0)
+    end
+
+    local Data = {
+        Position = GetEntityCoords(Entity),
+        Rotation = GetEntityRotation(Entity, 2)
+    }
+
+    SetTimeout(500, function()
+        DeleteEntity(Entity)
+    end)
+
+    return Data
+end
+
+local function ToggleKeybinds(Toggle)
+    for i = 1, #Keybinds do
+        local Keybind = Keybinds[i]
+        Keybind:disable(Toggle)
+    end
+end
+
+local function RemoveEdit()
+    local TempData = Editing
+    Editing = { Prop = nil, Cursor = false, Mode = 'translate', Relative = false, Snap = { Active = false, Angle = 15.0, GridSize = 0.5 } }
+    
+    if TempData['Cursor'] then LeaveCursorMode() end
+end
+
+local function ToggleFocus()
+    if Editing['Prop'] then
+        if Editing['Cursor'] then
+            LeaveCursorMode()
+        else
+            EnterCursorMode()
+            SetCursorLocation(0.5, 0.5)
+        end
+        Editing['Cursor'] = not Editing['Cursor']
+    else
+        local Focus = not IsNuiFocused()
+
+        SetNuiFocus(Focus, Focus)
+    end
+end
+
+RegisterNUICallback('StartDecorating', function(_, cb)
+    if not cache.InHouse then cb({ Success = false }) return end
+    local House = HouseCache[cache.InHouse]
+    if not House then cb({ Success = false }) return end
+
+    ToggleKeybinds(false)
+
+    cache.Decorating = true
+
+    cb({
+        Success = true,
+        Decorations = House.Decor
+    })
+end)
+
+RegisterNUICallback('StopDecorating', function(_, cb)
+    SetNuiFocus(false, false)
+
+    RemoveEdit()
+
+    ToggleKeybinds(true)
+
+    cache.Decorating = false
+
+    if cache.SelectedProp then
+        local Props = InHouse['Models']
+        local OldProp = Props[cache.SelectedProp]
+        if DoesEntityExist(OldProp) then
+            SetEntityDrawOutline(OldProp, false)
+        end
+    end
+    cache.SelectedProp = nil
+
+    cb({})
+end)
+
+RegisterNUICallback('PlaceFurniture', function(Data, cb)
+    local PlayerPed = cache.ped
+
+    local HouseId = cache.InHouse
+    if not HouseId then return end
+
+    RemoveEdit()
+
+    SetNuiFocus(false, false)
+
+    local ModelHash = GetHashKey(Data.Model)
+
+    lib.requestModel(ModelHash)
+
+    local StartOffset = GetEntityCoords(PlayerPed) + GetEntityForwardVector(PlayerPed) * 2
+
+    Editing['Prop'] = CreateObjectNoOffset(ModelHash, StartOffset.x, StartOffset.y, StartOffset.z, false, false, false)
+
+    SetModelAsNoLongerNeeded(ModelHash)
+    
+    local GizmoData = UseGizmo()
+
+    SetNuiFocus(true, true)
+
+    local Success, Message = lib.callback.await('mani-housing:server:UploadDecoration', false, {
+        HouseId = HouseId,
+        Model = ModelHash,
+        Label = Data.Label,
+        Price = Data.Price,
+        Position = GizmoData.Position,
+        Rotation = GizmoData.Rotation
+    })
+
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
+    cb(true)
+end)
+
+RegisterNUICallback('SelectProp', function(PropIndex, cb)
+    local HouseId = cache.InHouse
+    if not HouseId then return end
+
+    local Props = InHouse['Models']
+    local Prop = Props[PropIndex]
+    if not Prop then return end
+
+    if cache.SelectedProp then
+        local OldProp = Props[cache.SelectedProp]
+        if DoesEntityExist(OldProp) then
+            SetEntityDrawOutline(OldProp, false)
+        end
+    end
+
+    cache.SelectedProp = PropIndex
+
+    SetEntityDrawOutline(Prop, true)
+    SetEntityDrawOutlineColor(Prop, 255, 255, 0, 255)
+
+    cb({})
+end)
+
+RegisterNUICallback('EditProp', function(PropIndex, cb)
+    local HouseId = cache.InHouse
+    if not HouseId then return end
+
+    local Props = InHouse['Models']
+    local Prop = Props[PropIndex]
+    if not Prop then return end
+
+    RemoveEdit()
+
+    SetNuiFocus(false, false)
+
+    Editing['Prop'] = Prop
+
+    local GizmoData = UseGizmo()
+
+    SetNuiFocus(true, true)
+
+    local Success, Message = lib.callback.await('mani-housing:server:EditDecoration', false, {
+        HouseId = HouseId,
+        DecorIndex = PropIndex,
+        Position = GizmoData.Position,
+        Rotation = GizmoData.Rotation
+    })
+
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
+    cb({})
+end)
+
+RegisterNUICallback('DuplicateProp', function(PropIndex, cb)
+    local HouseId = cache.InHouse
+    if not HouseId then return end
+
+    local House = HouseCache[HouseId]
+    if not House then return end
+
+    local Props = InHouse['Models']
+    local Prop = Props[PropIndex]
+    if not Prop then return end
+
+    local PropData = House.Decor[PropIndex]
+    if not PropData then return end
+
+    RemoveEdit()
+
+    SetNuiFocus(false, false)
+
+    local ModelHash = PropData.Model
+
+    lib.requestModel(ModelHash)
+
+    local StartPosition = PropData.Position
+
+    Editing['Prop'] = CreateObjectNoOffset(ModelHash, StartPosition.x, StartPosition.y, StartPosition.z, false, false, false)
+    SetEntityRotation(Editing['Prop'], PropData.Rotation.x, PropData.Rotation.y, PropData.Rotation.z, 2, true)
+
+    SetModelAsNoLongerNeeded(ModelHash)
+    
+    local GizmoData = UseGizmo()
+
+    local Success, Message = lib.callback.await('mani-housing:server:UploadDecoration', false, {
+        HouseId = HouseId,
+        Model = ModelHash,
+        Label = PropData.Label,
+        Price = PropData.Price,
+        Position = GizmoData.Position,
+        Rotation = GizmoData.Rotation
+    })
+
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
+    SetNuiFocus(true, true)
+
+    cb({})
+end)
+
+RegisterNUICallback('SellProp', function(PropIndex, cb)
+    local HouseId = cache.InHouse
+    if not HouseId then return end
+
+    local Props = InHouse['Models']
+    local Prop = Props[PropIndex]
+    if not Prop then return end
+
+    local Success, Message = lib.callback.await('mani-housing:server:SellDecoration', false, {
+        HouseId = HouseId,
+        DecorIndex = PropIndex,
+    })
+
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
+    cb({})
+end)
+
+RegisterNUICallback('ToggleFocus', function(_, cb)
+    ToggleFocus()
+
+    cb({})
+end)
+
+CreateThread(function()
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateFocus',
+        description = 'Press Right MouseButton to Toggle Focus While Decorating',
+        defaultMapper = 'MOUSE_BUTTON',
+        defaultKey = 'MOUSE_RIGHT',
+        disabled = true,
+        onPressed = ToggleFocus
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateRotation',
+        description = 'Sets mode for the gizmo to rotation',
+        defaultKey = 'R',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            Editing['Mode'] = 'Rotate'
+            ExecuteCommand('+gizmoRotation')
+        end,
+        onReleased = function (self)
+            ExecuteCommand('-gizmoRotation')
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateSnap',
+        description = 'Hold to snap decoration object',
+        defaultKey = 'LSHIFT',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            Editing['Snap'].Active = true
+        end,
+        onReleased = function (self)
+            if not Editing['Prop'] then return end
+            Editing['Snap'].Active = false
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateSnapIncrease',
+        description = 'Increase snapping size',
+        defaultKey = 'Up',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            Editing['Snap'].Angle = Editing['Snap'].Angle + 5.0
+            Editing['Snap'].GridSize = Editing['Snap'].GridSize + 0.1
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateSnapDecrease',
+        description = 'Decrease snapping size',
+        defaultKey = 'Down',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            Editing['Snap'].Angle = Editing['Snap'].Angle - 5.0
+            Editing['Snap'].GridSize = Editing['Snap'].GridSize - 0.1
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateSelect',
+        description = 'Selects the currently highlighted gizmo',
+        defaultMapper = 'MOUSE_BUTTON',
+        defaultKey = 'MOUSE_LEFT',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            ExecuteCommand('+gizmoSelect')
+        end,
+        onReleased = function (self)
+            ExecuteCommand('-gizmoSelect')
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateTranslation',
+        description = 'Sets mode of the gizmo to translation',
+        defaultKey = 'W',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            Editing['Mode'] = 'Translate'
+            ExecuteCommand('+gizmoTranslation')
+        end,
+        onReleased = function (self)
+            ExecuteCommand('-gizmoTranslation')
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateLocal',
+        description = 'Toggle gizmo to be local to the entity instead of world',
+        defaultKey = 'Q',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            Editing['Relative'] = not Editing['Relative']
+            ExecuteCommand('+gizmoLocal')
+        end,
+        onReleased = function (self)
+            ExecuteCommand('-gizmoLocal')
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateConfirm',
+        description = 'Confirm Gizmo',
+        defaultKey = 'RETURN',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            RemoveEdit()
+        end
+    })
+
+    Keybinds[#Keybinds + 1] = lib.addKeybind({
+        name = 'decorateSnapToGround',
+        description = 'snap current gizmo object to floor/surface',
+        defaultKey = 'LMENU',
+        disabled = true,
+        onPressed = function(self)
+            if not Editing['Prop'] then return end
+            PlaceObjectOnGroundProperly_2(Editing['Prop'])
+        end
+    })
 end)

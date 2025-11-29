@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { visibilityStore as visibility, House, NearbyPlayers, Current, Locales } from "$lib/stores/VisibilityStore";
+    import { visibilityStore as visibility, House, NearbyPlayers, Current, Locales, Props } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
     import SelectPlayer from "./components/SelectPlayer.svelte";
 
@@ -68,9 +68,11 @@
     }
 
     function startDecorating() {
-        fetchNui('StartDecorating').then(Success => {
-            if (Success)
+        fetchNui('StartDecorating').then(Data => {
+            if (Data.Success) {
                 Current.set("decor");
+                Props.set(Data.Decorations);
+            }
         })
     }
 

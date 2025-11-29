@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Config, Locales } from "$lib/stores/VisibilityStore";
+    import { Config, Locales, Props } from "$lib/stores/VisibilityStore";
+    import { useNuiEvent } from "$lib/hooks/useNuiEvent";
     import { fetchNui } from "$lib/utils/fetchNui";
     import { onMount, onDestroy, tick } from 'svelte';
     let selectedCategory = Object.keys($Config?.Furniture || {})[0] || '';
@@ -13,6 +14,7 @@
     let lastTime = 0;
     let rafId: number | null = null;
     let Editing = false;
+    let selectedPropIndex: number | null = null;
 
     $: categories = Object.keys($Config?.Furniture || {}).sort();  // Alphabetical order
 
@@ -175,6 +177,35 @@
         { key: '↑/↓', description: 'Snap Size' },
         { key: 'ENTER', description: 'Done Editing' },
     ];
+
+    function selectProp(PropIndex: number) {
+        selectedPropIndex = PropIndex;
+        fetchNui("SelectProp", PropIndex + 1);
+    }
+
+    function editProp(PropIndex: number) {
+        Editing = true;
+        fetchNui("EditProp", PropIndex + 1)
+            .then(() => {
+                Editing = false;
+            });
+    }
+
+    function duplicateProp(PropIndex: number) {
+        Editing = true;
+        fetchNui("DuplicateProp", PropIndex + 1)
+            .then(() => {
+                Editing = false;
+            });
+    }
+
+    function sellProp(PropIndex: number) {
+        fetchNui("SellProp", PropIndex + 1);
+    }
+
+    useNuiEvent("UpdateDecorations", (Data: any) => {
+        Props.set(Data);
+	});
 </script>
 
 <div class="fixed inset-0 select-none z-40">
@@ -213,7 +244,7 @@
                     <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] overflow-hidden shadow-2xl relative">
                         <div
                             bind:this={scrollContainer}
-                            on:mousedown|preventDefault={handleMouseDown}
+                            on:mousedown|preventDefault={handleScrollMouseDown}
                             class="h-full p-3 overflow-x-auto overflow-y-hidden hide-scrollbar-horizontal absolute inset-0 select-none"
                         >
                             <div class="grid grid-rows-[118px_118px] auto-cols-[200px] grid-flow-col gap-3 w-max h-full">
@@ -248,6 +279,49 @@
                     <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] flex items-center justify-center text-gray-400 text-sm shadow-2xl">{$Locales["UI.NoFurnitureFound"]}</div>
                 {/if}
             </main>
+            <aside class="w-1/5 min-w-[200px] bg-[#1e1e1e] border-l border-[#333333] flex flex-col h-full rounded-t-md shadow-2xl flex-shrink-0">
+                <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center rounded-tr-md">
+                    <div class="flex items-center">
+                        <h1 class="text-white font-medium">{$Locales["UI.Props"]}</h1>
+                    </div>
+                </header>
+                <div class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-2">
+                    {#if Object.keys($Props).length > 0}
+                        {#each Object.entries($Props).reverse() as [index, prop], i}
+                            <div class="bg-[#1a1a1a] border border-[#333333] rounded-md overflow-hidden transition-colors cursor-pointer {selectedPropIndex === Object.keys($Props).length - 1 - i ? 'border-blue-400' : 'hover:border-blue-400/50'}" on:click={() => selectProp(Object.keys($Props).length - 1 - i)}>
+                                <div class="px-3 py-2">
+                                    <div class="font-medium truncate text-white">{prop.Label}</div>
+                                    <div class="text-xs text-gray-500">{prop.Model}</div>
+                                </div>
+                            </div>
+                        {/each}
+                    {:else}
+                        <div class="text-gray-400 text-sm text-center py-8">{$Locales["UI.NoProps"]}</div>
+                    {/if}
+                </div>
+                {#if selectedPropIndex !== null}
+                    <div class="border-t border-[#333333] p-3 space-y-2">
+                        <button
+                            on:click={() => editProp(selectedPropIndex)}
+                            class="w-full bg-blue-400 text-white px-2 py-1 rounded font-medium hover:bg-blue-500 transition-colors text-xs"
+                        >
+                            {$Locales["UI.Edit"]}
+                        </button>
+                        <button
+                            on:click={() => duplicateProp(selectedPropIndex)}
+                            class="w-full bg-purple-500 text-white px-2 py-1 rounded font-medium hover:bg-purple-600 transition-colors text-xs"
+                        >
+                            {$Locales["UI.Duplicate"]}
+                        </button>
+                        <button
+                            on:click={() => sellProp(selectedPropIndex)}
+                            class="w-full bg-red-500 text-white px-2 py-1 rounded font-medium hover:bg-red-600 transition-colors text-xs"
+                        >
+                            {$Locales["UI.Sell"]}
+                        </button>
+                    </div>
+                {/if}
+            </aside>
         </div>
     </div>
 

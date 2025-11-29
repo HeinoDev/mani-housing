@@ -61,6 +61,11 @@
         "Model": "Model",
         "Place": "Place",
         "NoFurnitureFound": "No furniture found.",
+        "Props": "Props",
+        "NoProps": "No props placed.",
+        "Edit": "Edit",
+        "Duplicate": "Duplicate",
+        "Sell": "Sell",
 
         "EnterThePrice": "Enter the price",
         "SetPrice": "Set Price",

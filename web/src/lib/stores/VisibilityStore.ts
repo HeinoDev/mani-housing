@@ -17,6 +17,8 @@ export const House = writable<any>({});
 
 export const Houses = writable<any>({});
 
+export const Props = writable<any>({});
+
 export const Locales = writable<any>({});
 
 export const Current = writable<string>("main");

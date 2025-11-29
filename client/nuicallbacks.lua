@@ -4,7 +4,7 @@ RegisterNUICallback('HideUI', function(_, cb)
 end)
 
 RegisterNUICallback('GetNearbyPlayers', function(_, cb)
-    local Players = lib.callback.await('mani-housing:server:GetNearbyPlayers', false, GetEntityCoords(cache.ped), cache.currentHouse or cache.inHouse)
+    local Players = lib.callback.await('mani-housing:server:GetNearbyPlayers', false, GetEntityCoords(cache.ped), cache.CurrentHouse or cache.InHouse)
     cb(Players)
 end)
 
@@ -31,7 +31,7 @@ end)
 
 RegisterNUICallback('PlaceWardrobe', function(_, cb)
     SetNuiFocus(false, false)
-    local HouseId = cache.inHouse
+    local HouseId = cache.InHouse
     if not HouseId then return end
     local Success, Message = lib.callback.await('mani-housing:server:PlaceWardrobe', false, {
         HouseId = HouseId,
@@ -43,7 +43,7 @@ end)
 
 RegisterNUICallback('PlaceStash', function(HouseId, cb)
     SetNuiFocus(false, false)
-    local HouseId = cache.inHouse
+    local HouseId = cache.InHouse
     if not HouseId then return end
     local Success, Message = lib.callback.await('mani-housing:server:PlaceStash', false, {
         HouseId = HouseId,

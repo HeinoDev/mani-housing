@@ -416,6 +416,45 @@ lib.callback.register('mani-housing:server:UploadDecoration', function(Source, D
     return true
 end)
 
+lib.callback.register('mani-housing:server:EditDecoration', function(Source, Data)
+    local HouseId = Data.HouseId
+    local DecorIndex = Data.DecorIndex
+
+    local Position = Data.Position
+    local Rotation = Data.Rotation
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return false, locale('Notify.GenericError') end
+
+    local House = HouseCache[HouseId]
+    if not House then return false, locale('Notify.HouseNotExist') end
+
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
+
+    House:EditDecoration({
+        DecorIndex = DecorIndex,
+        Position = Position,
+        Rotation = Rotation
+    })
+end)
+
+lib.callback.register('mani-housing:server:SellDecoration', function(Source, Data)
+    local HouseId = Data.HouseId
+    local DecorIndex = Data.DecorIndex
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return false, locale('Notify.GenericError') end
+
+    local House = HouseCache[HouseId]
+    if not House then return false, locale('Notify.HouseNotExist') end
+
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
+
+    House:SellDecoration(DecorIndex)
+
+    return true
+end)
+
 function HouseClass:AddKeyholder(Source, Permissions, IgnoreClient)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return end
@@ -594,6 +633,38 @@ function HouseClass:AddDecoration(Data)
         Position = Position,
         Rotation = Rotation
     }
+
+    MySQL.update.await('UPDATE mani_houses SET decor = ? WHERE houseid = ?', {
+        json.encode(self.Decor),
+        self.HouseId
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'UpdateDecoration')
+end
+
+function HouseClass:EditDecoration(Data)
+    local DecorIndex = Data.DecorIndex
+
+    local Position = Data.Position
+    local Rotation = Data.Rotation
+
+    if not self.Decor[DecorIndex] then return end
+
+    self.Decor[DecorIndex].Position = Position
+    self.Decor[DecorIndex].Rotation = Rotation
+
+    MySQL.update.await('UPDATE mani_houses SET decor = ? WHERE houseid = ?', {
+        json.encode(self.Decor),
+        self.HouseId
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'UpdateDecoration')
+end
+
+function HouseClass:SellDecoration(DecorIndex)
+    if not self.Decor[DecorIndex] then return end
+
+    table.remove(self.Decor, DecorIndex)
 
     MySQL.update.await('UPDATE mani_houses SET decor = ? WHERE houseid = ?', {
         json.encode(self.Decor),
