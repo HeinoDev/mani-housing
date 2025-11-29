@@ -97,26 +97,6 @@ local function UseGizmo()
     return Data
 end
 
--- local function textUILoop()
---     CreateThread(function()
---         while Editing['Prop'] do
---             Wait(100)
---             lib.showTextUI(
---                 ('Current Mode: %s | %s  s\n'):format(Editing['Mode'], (Editing['Relative'] and 'Relative') or 'World') ..
---                 '[RMB]     - ' .. (Editing['Cursor'] and "Disable" or "Enable") .. ' Cursor  \n' ..
---                 '[W]     - Translate Mode  \n' ..
---                 '[R]     - Rotate Mode  \n' ..
---                 '[Q]     - Relative/World  \n' ..
---                 '[LALT]  - Snap To Ground  \n' ..
---                 '[Shift]  - Placement/Rot Snap  \n' ..
---                 '[Arrow Up/Down]  - Snapping Angle/Grid Size  \n' ..
---                 '[ENTER] - Done Editing  \n'
---             )
---         end
---         lib.hideTextUI()
---     end)
--- end
-
 local function ToggleKeybinds(Toggle)
     for i = 1, #Keybinds do
         local Keybind = Keybinds[i]
@@ -210,7 +190,7 @@ CreateThread(function()
         defaultMapper = 'MOUSE_BUTTON',
         defaultKey = 'MOUSE_RIGHT',
         disabled = true,
-        onPressed = ToggleFocus,
+        onPressed = ToggleFocus
     })
 
     Keybinds[#Keybinds + 1] = lib.addKeybind({
@@ -320,7 +300,7 @@ CreateThread(function()
         onPressed = function(self)
             if not Editing['Prop'] then return end
             RemoveEdit()
-        end,
+        end
     })
 
     Keybinds[#Keybinds + 1] = lib.addKeybind({
@@ -331,6 +311,6 @@ CreateThread(function()
         onPressed = function(self)
             if not Editing['Prop'] then return end
             PlaceObjectOnGroundProperly_2(Editing['Prop'])
-        end,
+        end
     })
 end)
