@@ -6,8 +6,8 @@ author 'ManiMods'
 description 'Housing System Built For Performance'
 version '1.0.0'
 
--- ui_page 'http://localhost:5173/'
-ui_page 'web/build/index.html'
+ui_page 'http://localhost:5173/'
+-- ui_page 'web/build/index.html'
 
 client_scripts {
     'client/*.lua',

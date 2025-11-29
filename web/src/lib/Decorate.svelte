@@ -12,49 +12,69 @@
     let lastX = 0;
     let lastTime = 0;
     let rafId: number | null = null;
+    let Editing = false;
+
     $: categories = Object.keys($Config?.Furniture || {}).sort();  // Alphabetical order
+
     $: furniture = $Config?.Furniture[selectedCategory] || [];
+
     $: allFurniture = Object.entries($Config?.Furniture || {}).flatMap(([cat, items]) =>
         items.map(item => ({...item, category: cat}))
     );
+
     $: filteredAll = searchTerm
         ? allFurniture.filter(item =>
             item.Label.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.Model.toLowerCase().includes(searchTerm.toLowerCase())
         )
         : allFurniture;
+
     $: displayFurniture = searchTerm ? filteredAll : furniture;
+
     $: if (searchTerm) selectedCategory = '';
+
     function selectCategory(cat: string) {
         selectedCategory = cat;
         if (searchTerm) searchTerm = ''; // Clear search when selecting category
         resetScroll();
     }
+
     function resetScroll() {
         if (scrollContainer) {
             scrollContainer.scrollLeft = 0;
         }
     }
+
     function placeFurniture(item: any) {
-        fetchNui("PlaceFurniture", {
+        Editing = true;
+
+        fetchNui('PlaceFurniture', {
             Model: item.Model,
             Label: item.Label,
             Price: item.Price
-        });
+        }).then(Success => {
+            if (Success) {
+                Editing = false;
+            }
+        })
     }
+    
     function CloseUI() {
         fetchNui("HideDecorationUI");
     }
+
     function scrollLeft() {
         if (scrollContainer) {
             scrollContainer.scrollBy({ left: -212, behavior: 'smooth' });
         }
     }
+
     function scrollRight() {
         if (scrollContainer) {
             scrollContainer.scrollBy({ left: 212, behavior: 'smooth' });
         }
     }
+
     function handleMouseDown(e: MouseEvent) {
         isDragging = true;
         startX = e.pageX - scrollContainer!.offsetLeft;
@@ -68,6 +88,7 @@
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
     }
+
     function handleMouseMove(e: MouseEvent) {
         if (!isDragging || !scrollContainer) return;
         e.preventDefault();
@@ -85,6 +106,7 @@
         const walk = (x - startX) * 0.8; // Further reduced sensitivity for slower drag
         scrollContainer.scrollLeft = startScrollLeft - walk;
     }
+
     function handleMouseUp() {
         if (!isDragging || !scrollContainer) return;
         isDragging = false;
@@ -97,6 +119,7 @@
             momentumScroll();
         }
     }
+
     function momentumScroll() {
         if (!scrollContainer || Math.abs(velocity) < 0.01) {
             rafId = null;
@@ -107,12 +130,14 @@
         velocity *= 0.88; // Increased friction for quicker stop
         rafId = requestAnimationFrame(momentumScroll);
     }
+
     function handleRightClick(e: MouseEvent) {
         if (e.button === 2) {
             e.preventDefault();
             ToggleFocus();
         }
     }
+
     onMount(async () => {
         await tick();
         if (scrollContainer) {
@@ -120,6 +145,7 @@
         }
         document.addEventListener('mousedown', handleRightClick);
     });
+
     onDestroy(() => {
         if (isDragging) {
             document.removeEventListener('mousemove', handleMouseMove);
@@ -130,17 +156,29 @@
         }
         document.removeEventListener('mousedown', handleRightClick);
     });
-    // Reset scroll when search starts
+
     $: if (searchTerm && searchTerm.length > 0) {
         resetScroll();
     }
+
     function ToggleFocus() {
         fetchNui("ToggleFocus");
     }
+
+    const keybinds = [
+        { key: 'RMB', description: 'Toggle Cursor' },
+        { key: 'W', description: 'Translate Mode' },
+        { key: 'R', description: 'Rotate Mode' },
+        { key: 'Q', description: 'Relative/World' },
+        { key: 'LALT', description: 'Snap To Ground' },
+        { key: 'SHIFT', description: 'Placement/Rot Snap' },
+        { key: '↑/↓', description: 'Snap Size' },
+        { key: 'ENTER', description: 'Done Editing' },
+    ];
 </script>
 
 <div class="fixed inset-0 select-none z-40">
-    <div class="fixed bottom-0 left-0 right-0 w-full h-[450px] flex flex-col overflow-hidden">
+    <div class="fixed bottom-0 left-0 right-0 w-full h-[450px] flex flex-col overflow-hidden transition-transform duration-500 ease-in-out" class:translate-y-full={Editing}>
         <div class="flex flex-1 overflow-hidden">
             <aside class="w-1/5 min-w-[200px] bg-[#1e1e1e] border-r border-[#333333] flex flex-col h-full rounded-t-md shadow-2xl flex-shrink-0">
                 <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center rounded-t-md">
@@ -212,6 +250,19 @@
             </main>
         </div>
     </div>
+
+    <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-[#1e1e1e] border border-[#333333] rounded-md px-4 py-2 z-40 shadow-lg max-w-[90vw] transition-all duration-500 ease-in-out pointer-events-none" class:pointer-events-auto={Editing} style="opacity: {Editing ? 1 : 0}; transform: translateX(-50%) translateY({Editing ? 0 : 120}px)">
+        <div class="flex flex-wrap gap-4 items-center justify-center">
+            {#each keybinds as bind}
+                <div class="flex items-center gap-2">
+                    <div class="bg-[#121212] border border-[#333333] rounded px-2 py-1 text-white font-medium text-xs whitespace-nowrap">
+                        {bind.key}
+                    </div>
+                    <span class="text-gray-300 text-sm whitespace-nowrap">{bind.description}</span>
+                </div>
+            {/each}
+        </div>
+    </div>
 </div>
 
 <style lang="css">
@@ -252,5 +303,9 @@
     button:disabled {
         opacity: 0.3;
         cursor: not-allowed;
+    }
+
+    .translate-y-full {
+        transform: translateY(100%);
     }
 </style>

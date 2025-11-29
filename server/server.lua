@@ -193,7 +193,7 @@ end)
 
 lib.callback.register('mani-housing:server:CreateHouse', function(Source, Data)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
-
+    if not PlayerData then return false, locale('Notify.GenericError') end
     if not Config.WhitelistedJobs[PlayerData.Job.Name] then return false, locale('Notify.NoPermission') end
 
     local HouseData = {
@@ -389,6 +389,33 @@ lib.callback.register('mani-housing:server:SellHouse', function(Source, Data)
     return true
 end)
 
+lib.callback.register('mani-housing:server:UploadDecoration', function(Source, Data)
+    local HouseId = Data.HouseId
+    local Model = Data.Model
+    local Label = Data.Label
+    local Price = Data.Price
+    local Position = Data.Position
+    local Rotation = Data.Rotation
+
+    local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
+    if not PlayerData then return false, locale('Notify.GenericError') end
+
+    local House = HouseCache[HouseId]
+    if not House then return false, locale('Notify.HouseNotExist') end
+
+    if not House:HasAccess(PlayerData.Identifier, 'Admin') then return false, locale('Notify.NoPermission') end
+
+    House:AddDecoration({
+        Model = Model,
+        Label = Label,
+        Price = Price,
+        Position = Position,
+        Rotation = Rotation
+    })
+
+    return true
+end)
+
 function HouseClass:AddKeyholder(Source, Permissions, IgnoreClient)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return end
@@ -546,11 +573,34 @@ function HouseClass:Sell(Price)
 
     MySQL.update.await('UPDATE mani_houses SET state = ?, salesdata = ? WHERE houseid = ?', {
         self.State, 
-        json.encode(self.SalesData), 
+        json.encode(self.SalesData),
         self.HouseId
     })
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
+end
+
+function HouseClass:AddDecoration(Data)
+    local Model = Data.Model
+    local Label = Data.Label
+    local Price = Data.Price
+    local Position = Data.Position
+    local Rotation = Data.Rotation
+
+    self.Decor[#self.Decor + 1] = {
+        Model = Model,
+        Label = Label,
+        Price = Price,
+        Position = Position,
+        Rotation = Rotation
+    }
+
+    MySQL.update.await('UPDATE mani_houses SET decor = ? WHERE houseid = ?', {
+        json.encode(self.Decor),
+        self.HouseId
+    })
+
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'UpdateDecoration')
 end
 
 function HouseClass:RunAction(Action)

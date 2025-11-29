@@ -285,7 +285,7 @@
                             {$Locales["UI.PlaceStash"]}
                         </button>
                         <button 
-                            disabled={true}
+                            disabled={false}
                             onclick={startDecorating}
                             class="w-full bg-[#1e1e1e] border border-[#333333] rounded-md p-3 text-left hover:bg-[#2a2a2a] transition-colors text-sm text-white flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                         >

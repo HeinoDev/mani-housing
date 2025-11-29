@@ -3,7 +3,7 @@ local Keybinds, Editing = {}, { Prop = nil, Cursor = false, Mode = 'translate', 
 
 local dataview = lib.load('open.dataview')
 
-local function makeEntityMatrix(entity)
+local function MakeEntityMatrix(entity)
     local f, r, u, a = GetEntityMatrix(entity)
     local view = dataview.ArrayBuffer(60)
 
@@ -27,7 +27,7 @@ local function makeEntityMatrix(entity)
     return view
 end
 
-local function applyEntityMatrix(entity, view)
+local function ApplyEntityMatrix(entity, view)
     local x1, y1, z1 = view:GetFloat32(16), view:GetFloat32(20), view:GetFloat32(24)
     local x2, y2, z2 = view:GetFloat32(0), view:GetFloat32(4), view:GetFloat32(8)
     local x3, y3, z3 = view:GetFloat32(32), view:GetFloat32(36), view:GetFloat32(40)
@@ -41,7 +41,7 @@ local function applyEntityMatrix(entity, view)
     )
 end
 
-local function gizmoLoop()
+local function UseGizmo()
     if not Editing['Prop'] then return LeaveCursorMode() end
 
     EnterCursorMode()
@@ -49,76 +49,73 @@ local function gizmoLoop()
 
     SetCursorLocation(0.5, 0.5)
 
-    SetEntityDrawOutline(Editing['Prop'], true)
-    SetEntityDrawOutlineColor(Editing['Prop'], 255, 255, 0, 255)
+    local Entity = Editing['Prop']
 
-    while Editing['Prop'] and DoesEntityExist(Editing['Prop']) do
+    SetEntityDrawOutline(Entity, true)
+    SetEntityDrawOutlineColor(Entity, 255, 255, 0, 255)
+
+    while Editing['Prop'] == Entity and DoesEntityExist(Entity) do
         DisableControlAction(0, 24, true)  -- lmb
         DisableControlAction(0, 25, true)  -- rmb
         DisableControlAction(0, 140, true) -- r
         DisablePlayerFiring(cache.playerId, true)
 
-        SetEntityCollision(Editing['Prop'], false, true)
+        SetEntityCollision(Entity, false, true)
 
-        local matrixBuffer = makeEntityMatrix(Editing['Prop'])
+        local matrixBuffer = MakeEntityMatrix(Entity)
         local changed = DrawGizmo(matrixBuffer:Buffer(), 'Editor2', Citizen.ReturnResultAnyway())
 
         if changed then
-            applyEntityMatrix(Editing['Prop'], matrixBuffer)
-
+            ApplyEntityMatrix(Entity, matrixBuffer)
             if Editing['Snap'].Active then
-                local Pos = GetEntityCoords(Editing['Prop'])
+                local Pos = GetEntityCoords(Entity)
                 local GridSize = Editing['Snap'].GridSize
                 local SnappedX = (math.floor((Pos.x / GridSize) + 0.5)) * GridSize
                 local SnappedY = (math.floor((Pos.y / GridSize) + 0.5)) * GridSize
                 local SnappedZ = (math.floor((Pos.z / GridSize) + 0.5)) * GridSize
-                SetEntityCoordsNoOffset(Editing['Prop'], SnappedX, SnappedY, SnappedZ, true, true, true)
+                SetEntityCoordsNoOffset(Entity, SnappedX, SnappedY, SnappedZ, true, true, true)
 
-                local Rot = GetEntityRotation(Editing['Prop'], 2)
+                local Rot = GetEntityRotation(Entity, 2)
                 local SnapAngle = Editing['Snap'].Angle
                 local SnappedRotX = (math.floor((Rot.x / SnapAngle) + 0.5)) * SnapAngle
                 local snappedRotY = (math.floor((Rot.y / SnapAngle) + 0.5)) * SnapAngle
                 local snappedRotZ = (math.floor((Rot.z / SnapAngle) + 0.5)) * SnapAngle
-                SetEntityRotation(Editing['Prop'], SnappedRotX, snappedRotY, snappedRotZ, 2, true)
+                SetEntityRotation(Entity, SnappedRotX, snappedRotY, snappedRotZ, 2, true)
             end
         end
 
         Wait(0)
     end
 
-    if DoesEntityExist(Editing['Prop']) then SetEntityDrawOutline(Editing['Prop'], false) end
-end
-
-local function textUILoop()
-    CreateThread(function()
-        while Editing['Prop'] do
-            Wait(100)
-            lib.showTextUI(
-                ('Current Mode: %s | %s  s\n'):format(Editing['Mode'], (Editing['Relative'] and 'Relative') or 'World') ..
-                '[RMB]     - ' .. (Editing['Cursor'] and "Disable" or "Enable") .. ' Cursor  \n' ..
-                '[W]     - Translate Mode  \n' ..
-                '[R]     - Rotate Mode  \n' ..
-                '[Q]     - Relative/World  \n' ..
-                '[LALT]  - Snap To Ground  \n' ..
-                '[Shift]  - Placement/Rot Snap  \n' ..
-                '[Arrow Up/Down]  - Snapping Angle/Grid Size  \n' ..
-                '[ENTER] - Done Editing  \n'
-            )
-        end
-        lib.hideTextUI()
-    end)
-end
-
-local function useGizmo(entity)
-    textUILoop()
-    gizmoLoop()
-
-    return {
-        handle = entity,
-        position = GetEntityCoords(entity),
-        rotation = GetEntityRotation(entity)
+    local Data = {
+        Position = GetEntityCoords(Entity),
+        Rotation = GetEntityRotation(Entity, 2)
     }
+
+    DeleteEntity(Entity)
+
+    return Data
 end
+
+-- local function textUILoop()
+--     CreateThread(function()
+--         while Editing['Prop'] do
+--             Wait(100)
+--             lib.showTextUI(
+--                 ('Current Mode: %s | %s  s\n'):format(Editing['Mode'], (Editing['Relative'] and 'Relative') or 'World') ..
+--                 '[RMB]     - ' .. (Editing['Cursor'] and "Disable" or "Enable") .. ' Cursor  \n' ..
+--                 '[W]     - Translate Mode  \n' ..
+--                 '[R]     - Rotate Mode  \n' ..
+--                 '[Q]     - Relative/World  \n' ..
+--                 '[LALT]  - Snap To Ground  \n' ..
+--                 '[Shift]  - Placement/Rot Snap  \n' ..
+--                 '[Arrow Up/Down]  - Snapping Angle/Grid Size  \n' ..
+--                 '[ENTER] - Done Editing  \n'
+--             )
+--         end
+--         lib.hideTextUI()
+--     end)
+-- end
 
 local function ToggleKeybinds(Toggle)
     for i = 1, #Keybinds do
@@ -130,10 +127,6 @@ end
 local function RemoveEdit()
     local TempData = Editing
     Editing = { Prop = nil, Cursor = false, Mode = 'translate', Relative = false, Snap = { Active = false, Angle = 15.0, GridSize = 0.5 } }
-
-    if TempData['Prop'] then
-        DeleteEntity(TempData['Prop'])
-    end
     
     if TempData['Cursor'] then LeaveCursorMode() end
 end
@@ -170,13 +163,22 @@ RegisterNUICallback('PlaceFurniture', function(Data, cb)
 
     SetModelAsNoLongerNeeded(ModelHash)
     
-    local GizmoData = useGizmo(Editing['Prop'])
-
-    RemoveEdit()
+    local GizmoData = UseGizmo()
 
     SetNuiFocus(true, true)
 
-    cb({})
+    local Success, Message = lib.callback.await('mani-housing:server:UploadDecoration', false, {
+        HouseId = cache.inHouse,
+        Model = ModelHash,
+        Label = Data.Label,
+        Price = Data.Price,
+        Position = GizmoData.Position,
+        Rotation = GizmoData.Rotation
+    })
+
+    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
+    cb(true)
 end)
 
 local function ToggleFocus()

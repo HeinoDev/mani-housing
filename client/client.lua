@@ -166,6 +166,21 @@ local function EnterHouse(Data)
         })
     end
 
+    for i = 1, #House.Decor do
+        local Decor = House.Decor[i]
+        local ModelHash = Decor.Model
+
+        lib.requestModel(ModelHash)
+
+        local DecorObj = CreateObject(ModelHash, Decor.Position.x, Decor.Position.y, Decor.Position.z - 0.45, false, false, false)
+        SetEntityRotation(DecorObj, Decor.Rotation.x, Decor.Rotation.y, Decor.Rotation.z, 2, true)
+        FreezeEntityPosition(DecorObj, true)
+
+        SetModelAsNoLongerNeeded(ModelHash)
+
+        InHouse['Models'][#InHouse['Models'] + 1] = DecorObj
+    end
+
     Wait(500)
     DoScreenFadeIn(500)
 
@@ -259,7 +274,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
                 local PlayerData = exports['mani-bridge']:GetPlayerData()
                 if not PlayerData then return end
 
-                self.HasAcess = HasAccess(House, self.PlayerData.Identifier, 'Garage')
+                self.HasAcess = HasAccess(House, PlayerData.Identifier, 'Garage')
             end,
             nearby = function(self)
                 if not self.HasAcess then return end
@@ -527,6 +542,29 @@ RegisterNetEvent('mani-housing:client:UpdateHouse', function(House, Action)
 
         HousePoints[House.HouseId] = nil
         HouseCache[House.HouseId] = nil
+    elseif Action == 'UpdateDecoration' then
+        HouseCache[House.HouseId] = House
+
+        if cache.inHouse == House.HouseId then
+            for i = 1, #InHouse['Models'] do
+                DeleteEntity(InHouse['Models'][i])
+            end
+
+            InHouse['Models'] = {}
+
+            for i = 1, #House.Decor do
+                local Decor = House.Decor[i]
+                local ModelHash = Decor.Model
+
+                lib.requestModel(ModelHash)
+
+                local DecorObj = CreateObject(ModelHash, Decor.Position.x, Decor.Position.y, Decor.Position.z - 0.45, false, false, false)
+                SetEntityRotation(DecorObj, Decor.Rotation.x, Decor.Rotation.y, Decor.Rotation.z, 2, true)
+                FreezeEntityPosition(DecorObj, true)
+
+                InHouse['Models'][#InHouse['Models'] + 1] = DecorObj
+            end
+        end
     end
 end)
 
