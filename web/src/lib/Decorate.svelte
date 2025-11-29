@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Config, Locales, Props } from "$lib/stores/VisibilityStore";
+    import { Config, Locales, Props, visibilityStore as visibility } from "$lib/stores/VisibilityStore";
     import { useNuiEvent } from "$lib/hooks/useNuiEvent";
     import { fetchNui } from "$lib/utils/fetchNui";
     import { onMount, onDestroy, tick } from 'svelte';
@@ -62,7 +62,8 @@
     }
     
     function CloseUI() {
-        fetchNui("HideDecorationUI");
+        visibility.hide();
+        fetchNui("StopDecorating");
     }
 
     function scrollLeft() {
@@ -229,7 +230,7 @@
                     {#each categories as cat}
                         <button
                             on:click={() => selectCategory(cat)}
-                            class="w-full text-left px-3 py-2 rounded-md text-sm transition-colors {selectedCategory === cat ? 'bg-blue-400 text-white' : 'text-gray-400 hover:text-white'}"
+                            class="w-full text-left px-3 py-2 rounded-md text-sm transition-colors {selectedCategory === cat ? 'bg-blue-500/40 text-blue-300 border border-blue-500/50' : 'bg-[#1a1a1a] text-gray-400 border border-[#333333] hover:border-[#444444] hover:text-white'}"
                         >
                             {cat}
                         </button>
@@ -263,7 +264,7 @@
                                             <span class="text-green-400 font-medium">${item.Price.toLocaleString()}</span>
                                             <button
                                                 on:click={() => placeFurniture(item)}
-                                                class="bg-blue-400 text-white px-3 py-1 rounded-md font-medium hover:bg-blue-500 transition-colors whitespace-nowrap"
+                                                class="bg-blue-500/40 text-blue-300 hover:bg-blue-500/50 border border-blue-500/50 hover:border-blue-400 px-3 py-1 rounded font-medium transition-colors text-xs whitespace-nowrap"
                                             >
                                                 {$Locales["UI.Place"]}
                                             </button>
@@ -285,40 +286,43 @@
                         <h1 class="text-white font-medium">{$Locales["UI.Props"]}</h1>
                     </div>
                 </header>
-                <div class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-2">
+                <div class="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-2">
                     {#if Object.keys($Props).length > 0}
                         {#each Object.entries($Props).reverse() as [index, prop], i}
-                            <div class="bg-[#1a1a1a] border border-[#333333] rounded-md overflow-hidden transition-colors cursor-pointer {selectedPropIndex === Object.keys($Props).length - 1 - i ? 'border-blue-400' : 'hover:border-blue-400/50'}" on:click={() => selectProp(Object.keys($Props).length - 1 - i)}>
-                                <div class="px-3 py-2">
-                                    <div class="font-medium truncate text-white">{prop.Label}</div>
-                                    <div class="text-xs text-gray-500">{prop.Model}</div>
-                                </div>
-                            </div>
+                            <button
+                                on:click={() => selectProp(Object.keys($Props).length - 1 - i)}
+                                class="w-full text-left px-3 py-2 bg-[#1a1a1a] border border-[#333333] rounded-md overflow-hidden transition-all {selectedPropIndex === Object.keys($Props).length - 1 - i ? 'border-blue-400 ring-1 ring-blue-400/50' : 'hover:border-blue-400/50'}"
+                            >
+                                <div class="font-medium truncate text-white text-sm">{prop.Label}</div>
+                                <div class="text-xs text-gray-500">{prop.Model}</div>
+                            </button>
                         {/each}
                     {:else}
                         <div class="text-gray-400 text-sm text-center py-8">{$Locales["UI.NoProps"]}</div>
                     {/if}
                 </div>
                 {#if selectedPropIndex !== null}
-                    <div class="border-t border-[#333333] p-3 space-y-2">
-                        <button
-                            on:click={() => editProp(selectedPropIndex)}
-                            class="w-full bg-blue-400 text-white px-2 py-1 rounded font-medium hover:bg-blue-500 transition-colors text-xs"
-                        >
-                            {$Locales["UI.Edit"]}
-                        </button>
-                        <button
-                            on:click={() => duplicateProp(selectedPropIndex)}
-                            class="w-full bg-purple-500 text-white px-2 py-1 rounded font-medium hover:bg-purple-600 transition-colors text-xs"
-                        >
-                            {$Locales["UI.Duplicate"]}
-                        </button>
-                        <button
-                            on:click={() => sellProp(selectedPropIndex)}
-                            class="w-full bg-red-500 text-white px-2 py-1 rounded font-medium hover:bg-red-600 transition-colors text-xs"
-                        >
-                            {$Locales["UI.Sell"]}
-                        </button>
+                    <div class="border-t border-[#333333] p-3">
+                        <div class="grid grid-cols-3 gap-2">
+                            <button
+                                on:click={() => editProp(selectedPropIndex)}
+                                class="bg-blue-500/40 text-blue-300 hover:bg-blue-500/50 border border-blue-500/50 hover:border-blue-400 px-2 py-1.5 rounded font-medium transition-colors text-xs"
+                            >
+                                Edit
+                            </button>
+                            <button
+                                on:click={() => duplicateProp(selectedPropIndex)}
+                                class="bg-purple-500/40 text-purple-300 hover:bg-purple-500/50 border border-purple-500/50 hover:border-purple-400 px-2 py-1.5 rounded font-medium transition-colors text-xs"
+                            >
+                                Duplicate
+                            </button>
+                            <button
+                                on:click={() => sellProp(selectedPropIndex)}
+                                class="bg-red-500/40 text-red-300 hover:bg-red-500/50 border border-red-500/50 hover:border-red-400 px-2 py-1.5 rounded font-medium transition-colors text-xs"
+                            >
+                                Sell
+                            </button>
+                        </div>
                     </div>
                 {/if}
             </aside>
