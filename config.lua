@@ -53,6 +53,9 @@ Config.Shells = {
 		Stash = {
 			Weight = 1000000,
 			Slots = 100
+		},
+		Offsets = {
+			Exit = vec4(13.64, 1.71, -1.25, 89.74)
 		}
 	},
     {
@@ -61,6 +64,9 @@ Config.Shells = {
 		Stash = {
 			Weight = 1000000,
 			Slots = 100
+		},
+		Offsets = {
+			Exit = vec4(-1.37, -1.99, -0.98, 357.81)
 		}
 	},
     {
@@ -69,6 +75,9 @@ Config.Shells = {
 		Stash = {
 			Weight = 1000000,
 			Slots = 100
+		},
+		Offsets = {
+			Exit = vec4(-8.86, 0.08, -1.45, 268.35)
 		}
 	},
     {
@@ -79,7 +88,7 @@ Config.Shells = {
 			Slots = 100
 		},
 		Offsets = {
-			Exit = vec4(-0.25, -2.47, 0.56, 267.65)
+			Exit = vec4(-0.47, -2.47, -1.06, 270.45)
 		}
 	},
     {
@@ -88,6 +97,9 @@ Config.Shells = {
 		Stash = {
 			Weight = 1000000,
 			Slots = 100
+		},
+		Offsets = {
+			Exit = vec4(-0.01, -5.58, -0.71, 0.44)
 		}
 	},
     {
@@ -96,6 +108,9 @@ Config.Shells = {
 		Stash = {
 			Weight = 1000000,
 			Slots = 100
+		},
+		Offsets = {
+			Exit = vec4(-2.75, 4.53, -1.12, 181.69)
 		}
 	},
     {
@@ -104,6 +119,9 @@ Config.Shells = {
 		Stash = {
 			Weight = 1000000,
 			Slots = 100
+		},
+		Offsets = {
+			Exit = vec4(1.46, -10.25, -1.02, 0.88)
 		}
 	},
 }
