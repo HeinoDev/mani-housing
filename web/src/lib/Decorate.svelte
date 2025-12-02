@@ -207,6 +207,10 @@
     useNuiEvent("UpdateDecorations", (Data: any) => {
         Props.set(Data);
 	});
+
+    function handleScrollMouseDown(e: MouseEvent) {
+        // handleMouseDown(e);
+    }
 </script>
 
 <div class="fixed inset-0 select-none z-40">
