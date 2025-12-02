@@ -121,6 +121,8 @@ local function EnterHouse(Data)
     local HouseCoords = Data.HouseCoords
     local House = Data.House
 
+    if not HasAccess(House, Data.Identifier, 'Enter') then return end
+
     local ShellIndex = Config.ShellIndexes[House.Shell]
     if not ShellIndex then lib.print.error("Your shell doesn't exist - Contact support") return end
     local Shell = Config.Shells[ShellIndex]
@@ -213,6 +215,8 @@ local function SeeOffer(HouseId)
 end
 
 local function CreateHouse(HouseIndex, House, PlayerData)
+    cache.CurrentHouse = nil
+
     local HouseCoords = vec3(House.Coords.Entrance.x, House.Coords.Entrance.y, House.Coords.Entrance.z)
 
     HousePoints[HouseIndex] = HousePoints[HouseIndex] or {}
@@ -229,7 +233,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
             if not self.PlayerData then return end
 
             self.PlayerPed = cache.ped
-            local PlayerCoords = GetEntityCoords(PlayerPed)
+            local PlayerCoords = GetEntityCoords(self.PlayerPed)
             local Distance = #(PlayerCoords - HouseCoords)
 
             self.Estate = House.State == 0 and self.PlayerData.Identifier ~= House.Owner
@@ -240,7 +244,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
                 if cache.CurrentHouse then
                     local CurrentHouseCoords = HouseCache[cache.CurrentHouse].Coords.Entrance
 
-                    if Distance > #(PlayerCoords - CurrentHouseCoords.xyz) then return end
+                    if Distance > #(PlayerCoords - vec3(CurrentHouseCoords.x, CurrentHouseCoords.y, CurrentHouseCoords.z)) then return end
                 end
                 
                 Util.InDistance(House)
@@ -264,7 +268,8 @@ local function CreateHouse(HouseIndex, House, PlayerData)
                         EnterHouse({
                             HouseIndex = HouseIndex,
                             HouseCoords = HouseCoords,
-                            House = House
+                            House = House,
+                            Identifier = self.PlayerData.Identifier
                         })
                     end
                 end

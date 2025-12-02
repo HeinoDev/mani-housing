@@ -490,10 +490,9 @@ function HouseClass:UpdatePermissions(Identifier, Permissions)
 
     PlayerCache[Identifier].Keys[self.HouseId] = Permissions
 
-    MySQL.Async.execute('REPLACE INTO `mani_housekeys` (`identifier`, `keys`, `character`) VALUES (@identifier, @metadata, @character)', {
-        ['@identifier'] = Identifier,
-        ['@metadata'] = json.encode(PlayerCache[Identifier].Keys),
-        ['@character'] = PlayerCache[Identifier].Character
+    MySQL.update.await('UPDATE `mani_housekeys` SET `keys` = ? WHERE `identifier` = ?', {
+        json.encode(PlayerCache[Identifier].Keys),
+        Identifier
     })
 
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
@@ -508,10 +507,9 @@ function HouseClass:RemoveKeyholder(Identifier, IgnoreClient)
 
     PlayerCache[Identifier].Keys[self.HouseId] = nil
 
-    MySQL.Async.execute('REPLACE INTO `mani_housekeys` (`identifier`, `keys`, `character`) VALUES (@identifier, @metadata, @character)', {
-        ['@identifier'] = Identifier,
-        ['@metadata'] = json.encode(PlayerCache[Identifier].Keys),
-        ['@character'] = PlayerCache[Identifier].Character
+    MySQL.update.await('UPDATE `mani_housekeys` SET `keys` = ? WHERE `identifier` = ?', {
+        json.encode(PlayerCache[Identifier].Keys),
+        Identifier
     })
 
     if not IgnoreClient then TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update') end
