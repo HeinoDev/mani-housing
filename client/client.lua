@@ -382,7 +382,10 @@ local function SetupJobBlips()
 
                         SendNUIMessage({
                             action = "OpenHouseStats",
-                            data = House
+                            data = {
+                                House = House,
+                                Houses = HouseCache
+                            }
                         })
                     end
                 end

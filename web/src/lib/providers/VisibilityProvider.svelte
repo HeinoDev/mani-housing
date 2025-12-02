@@ -31,9 +31,10 @@
 		Current.set("main");
 	});
 
-	useNuiEvent("OpenHouseStats", (Data: any) => {
+	useNuiEvent("OpenHouseStats", (Data: { House: any, Houses: any }) => {
 		visibility.show();
-		House.set(Data);
+		House.set(Data.House);
+		Houses.set(Data.Houses);
 		Current.set("editonly");
 	});
 
