@@ -72,12 +72,9 @@ RegisterNUICallback('SetGarage', function(HouseId, cb)
     local PlayerPed = cache.ped
 
     local PlayerCoords = GetEntityCoords(PlayerPed)
-    local PlayerHeading = GetEntityHeading(PlayerPed)
-
-    local GarageCoords = vec4(PlayerCoords.xyz, PlayerHeading)
 
     local Success, Message = lib.callback.await('mani-housing:server:UpdateGarage', false, {
-        Coords = GarageCoords,
+        Coords = PlayerCoords,
         HouseId = HouseId
     })
 

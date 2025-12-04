@@ -463,6 +463,9 @@ lib.callback.register('mani-housing:server:SellDecoration', function(Source, Dat
     return true
 end)
 
+---@param Source number
+---@param Permissions table
+---@param IgnoreClient boolean
 function HouseClass:AddKeyholder(Source, Permissions, IgnoreClient)
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return end
@@ -489,6 +492,8 @@ function HouseClass:AddKeyholder(Source, Permissions, IgnoreClient)
     if not IgnoreClient then TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update') end
 end
 
+---@param Identifier string
+---@param Permissions table
 function HouseClass:UpdatePermissions(Identifier, Permissions)
     if not self.Keyholders[Identifier] then return end
     self.Keyholders[Identifier].Permissions = Permissions
@@ -506,6 +511,8 @@ function HouseClass:UpdatePermissions(Identifier, Permissions)
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
+---@param Identifier string
+---@param IgnoreClient boolean
 function HouseClass:RemoveKeyholder(Identifier, IgnoreClient)
     if not self.Keyholders[Identifier] then return end
     self.Keyholders[Identifier] = nil
@@ -523,6 +530,8 @@ function HouseClass:RemoveKeyholder(Identifier, IgnoreClient)
     if not IgnoreClient then TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update') end
 end
 
+---@param Identifier string
+---@param Key string
 function HouseClass:HasAccess(Identifier, Key)
     local IsOwner = self.Owner == Identifier
     local HasKey = self.Keyholders[Identifier] and self.Keyholders[Identifier].Permissions[Key or 'Enter']
@@ -530,6 +539,7 @@ function HouseClass:HasAccess(Identifier, Key)
     return IsOwner or HasKey
 end
 
+---@param PlayerData table
 function HouseClass:SetOwner(PlayerData)
     self.Owner = PlayerData.Identifier
     self.SalesData.OwnerName = PlayerData.Character.Fullname
@@ -542,6 +552,7 @@ function HouseClass:SetOwner(PlayerData)
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
+---@param Coords vector3
 function HouseClass:PlaceWardrobe(Coords)
     self.Coords.Wardrobe = Coords
 
@@ -556,6 +567,7 @@ function HouseClass:PlaceWardrobe(Coords)
     end)
 end
 
+---@param Coords vector3
 function HouseClass:PlaceStash(Coords)
     self.Coords.Stash = Coords
 
@@ -570,6 +582,7 @@ function HouseClass:PlaceStash(Coords)
     end)
 end
 
+---@param Coords vector3
 function HouseClass:SetGarage(Coords)
     self.Coords.Garage = Coords
 
@@ -594,6 +607,7 @@ function HouseClass:Remove()
     self = nil
 end
 
+---@param State number
 function HouseClass:SetState(State)
     if type(State) ~= 'number' then return end
 
@@ -606,6 +620,7 @@ function HouseClass:SetState(State)
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
+---@param Price number
 function HouseClass:Sell(Price)
     if type(Price) ~= 'number' then return end
 
@@ -625,6 +640,7 @@ function HouseClass:Sell(Price)
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
+---@param Data table
 function HouseClass:AddDecoration(Data)
     local Model = Data.Model
     local Label = Data.Label
@@ -648,6 +664,7 @@ function HouseClass:AddDecoration(Data)
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'UpdateDecoration')
 end
 
+---@param Data table
 function HouseClass:EditDecoration(Data)
     local DecorIndex = Data.DecorIndex
 
@@ -667,6 +684,7 @@ function HouseClass:EditDecoration(Data)
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'UpdateDecoration')
 end
 
+---@param DecorIndex number
 function HouseClass:SellDecoration(DecorIndex)
     if not self.Decor[DecorIndex] then return end
 
@@ -680,16 +698,22 @@ function HouseClass:SellDecoration(DecorIndex)
     TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'UpdateDecoration')
 end
 
+---@param Action function
 function HouseClass:RunAction(Action)
     for Source, State in pairs(self.Inside) do
         if State then Action(Source) end
     end
 end
 
+---@param HouseId number
+---@return table HouseCache[HouseId]
 exports('GetHouse', function(HouseId) return HouseCache[HouseId] end)
 
 exports('GetHouses', function() return HouseCache end)
 
+---@param Identifier string
+---@param ReturnByIndex boolean
+---@return table Houses
 exports('GetPlayerHouses', function(Identifier, ReturnByIndex)
     if type(Identifier) == 'number' then
         local PlayerData = exports['mani-bridge']:GetPlayerData(Identifier)
