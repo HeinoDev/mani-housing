@@ -442,6 +442,8 @@ lib.callback.register('mani-housing:server:EditDecoration', function(Source, Dat
         Position = Position,
         Rotation = Rotation
     })
+
+    return true
 end)
 
 lib.callback.register('mani-housing:server:SellDecoration', function(Source, Data)
