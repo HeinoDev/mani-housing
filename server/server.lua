@@ -361,6 +361,12 @@ lib.callback.register('mani-housing:server:RemoveHouse', function(Source, HouseI
 
     House:Remove()
 
+    Util.Log(Source, ('[Housing] [%s] | %s removed a house (HouseID: %s)'):format(
+        Source,
+        PlayerData.Character.Firstname,
+        HouseId
+    ))
+
     return true
 end)
 

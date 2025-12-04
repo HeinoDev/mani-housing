@@ -8,7 +8,6 @@
     let showEditModal = true;
     let showConfirm = false;
     let showInput = false;
-    let selectedHouseId: string | null = null;
 
     function CloseEditModal() {
         fetchNui("HideUI");
@@ -16,17 +15,19 @@
     }
 
     function RemoveHouse() {
-        CloseEditModal();
+        showEditModal = false;
         showConfirm = true;
     }
 
     function handleConfirm(e) {
         showConfirm = false;
         if (e.detail) {
-            if (selectedHouseId) {
-                fetchNui("RemoveHouse", parseInt(selectedHouseId) + 1);
-            }
+            fetchNui("RemoveHouse", $House.HouseId);
             visibility.hide();
+        }
+        else
+        {
+            showEditModal = true;
         }
     }
 
@@ -37,7 +38,7 @@
 
     function handleSell(e) {
         showInput = false;
-        if (e.type == "confirm" && selectedHouseId) {
+        if (e.type == "confirm") {
             fetchNui("SellHouse", {
                 HouseId: $House.HouseId,
                 Price: e.detail
@@ -52,7 +53,7 @@
 </script>
 
 {#if showEditModal}
-    <EditModal houseId={$House.HouseId} on:close={CloseEditModal} on:remove={RemoveHouse} on:sell={SellHouse} />
+    <EditModal houseId={$House.HouseId - 1} on:close={CloseEditModal} on:remove={RemoveHouse} on:sell={SellHouse} />
 {/if}
 
 {#if showConfirm}
