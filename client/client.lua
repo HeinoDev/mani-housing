@@ -10,6 +10,10 @@ local JobCache = {}
 
 lib.locale()
 
+---@param HouseId number
+---@param Identifier string
+---@param Key string
+---@return boolean
 local function HasAccess(HouseId, Identifier, Key)
     local House = type(HouseId) == 'table' and HouseId or HouseCache[HouseId]
     if not House then return false end
@@ -20,6 +24,10 @@ local function HasAccess(HouseId, Identifier, Key)
     return IsOwner or HasKey
 end
 
+---@param x number
+---@param y number
+---@param z number
+---@param text string
 local function Draw3DText(x, y, z, text)
     local onScreen, _x, _y = World3dToScreen2d(x, y, z)
     local scale = 0.35
@@ -38,6 +46,7 @@ local function Draw3DText(x, y, z, text)
     end
 end
 
+---@param Data table
 local function CreateBlip(Data)
     local Blip = AddBlipForCoord(Data.Coords.xyz)
     SetBlipSprite(Blip, Data.Sprite)
@@ -78,6 +87,7 @@ local function SpawnProps(Props)
     end
 end
 
+---@param House table
 local function ExitHouse(House)
     if not cache.InHouse then return end
     cache.InHouse = nil
@@ -113,6 +123,7 @@ local function ExitHouse(House)
     DoScreenFadeIn(500)
 end
 
+---@param Data table
 local function EnterHouse(Data)
     if cache.InHouse then return end
 
@@ -202,6 +213,7 @@ local function EnterHouse(Data)
     SetModelAsNoLongerNeeded(ShellModel)
 end
 
+---@param HouseId number
 local function SeeOffer(HouseId)
     local House = HouseCache[HouseId]
     if not House then return end
@@ -214,6 +226,9 @@ local function SeeOffer(HouseId)
     })
 end
 
+---@param HouseIndex number
+---@param House table
+---@param PlayerData table
 local function CreateHouse(HouseIndex, House, PlayerData)
     cache.CurrentHouse = nil
 
@@ -417,6 +432,7 @@ local function RemoveJobBlips()
     JobCache = {}
 end
 
+---@param PlayerData table
 local function LoadAllHouses(PlayerData)
     for HouseIndex, House in pairs(HouseCache) do
         CreateHouse(HouseIndex, House, PlayerData)
@@ -608,10 +624,15 @@ end)
 
 exports('HasAccess', HasAccess)
 
+---@param HouseId number
+---@return table
 exports('GetHouse', function(HouseId) return HouseCache[HouseId] end)
 
+---@return table
 exports('GetHouses', function() return HouseCache end)
 
+---@param ReturnByIndex boolean
+---@return table
 exports('GetPlayerHouses', function(ReturnByIndex)
     local PlayerData = exports['mani-bridge']:GetPlayerData()
     if not PlayerData then return {} end

@@ -1,5 +1,3 @@
-local Config = lib.load('config')
-
 RegisterNUICallback('CreateHouse', function(Data, cb)
     SetNuiFocus(false, false)
 
@@ -32,10 +30,7 @@ RegisterNUICallback('CreateHouse', function(Data, cb)
             Wait(0)
         end
         
-        PlayerCoords = GetEntityCoords(PlayerPed)
-        PlayerHeading = GetEntityHeading(PlayerPed)
-
-        GarageCoords = vec4(PlayerCoords.xyz, PlayerHeading)
+        GarageCoords = GetEntityCoords(PlayerPed)
     end
 
     SendNUIMessage({
