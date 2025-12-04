@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { visibilityStore as visibility, Current, Houses, Locales } from "$lib/stores/VisibilityStore";
+    import { visibilityStore as visibility, Current, Houses, House, Locales } from "$lib/stores/VisibilityStore";
     import { fetchNui } from "$lib/utils/fetchNui";
     import CreateModal from "./components/CreateModal.svelte";
     import EditModal from "./components/EditModal.svelte";
@@ -45,6 +45,7 @@
 
     function EditHouse(houseId: string) {
         selectedHouseId = houseId;
+        House.set($Houses[selectedHouseId]);
         showEditModal = true;
     }
 
@@ -52,8 +53,8 @@
         showEditModal = false;
     }
 
-    function ViewLocation(houseId: string) {
-        fetchNui("ViewLocation", parseInt(houseId) + 1);
+    function ViewLocation(HouseId: string) {
+        fetchNui("ViewLocation", $Houses[HouseId].HouseId);
         visibility.hide();
     }
 
@@ -66,7 +67,7 @@
         showConfirm = false;
         if (e.detail) {
             if (selectedHouseId) {
-                fetchNui("RemoveHouse", parseInt(selectedHouseId) + 1);
+                fetchNui("RemoveHouse", $Houses[selectedHouseId].HouseId);
             }
             visibility.hide();
         }
@@ -192,7 +193,7 @@
 {/if}
 
 {#if showEditModal}
-    <EditModal houseId={selectedHouseId} on:close={CloseEditModal} on:remove={RemoveHouse} on:sell={SellHouse} />
+    <EditModal on:close={CloseEditModal} on:remove={RemoveHouse} on:sell={SellHouse} />
 {/if}
 
 {#if showConfirm}

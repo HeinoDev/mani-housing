@@ -53,7 +53,7 @@
 </script>
 
 {#if showEditModal}
-    <EditModal houseId={$House.HouseId - 1} on:close={CloseEditModal} on:remove={RemoveHouse} on:sell={SellHouse} />
+    <EditModal on:close={CloseEditModal} on:remove={RemoveHouse} on:sell={SellHouse} />
 {/if}
 
 {#if showConfirm}

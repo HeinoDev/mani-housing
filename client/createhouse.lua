@@ -45,7 +45,8 @@ RegisterNUICallback('CreateHouse', function(Data, cb)
         Garage = GarageCoords,
         Zone = Zone
     })
-    if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
+    exports['mani-bridge']:Notify(Success and locale('Notify.Success') or locale('Notify.Error'), Success and locale('Notify.HouseCreated') or Message, Success and 'success' or 'error', 5000)
 end)
 
 RegisterNUICallback('SetGarage', function(HouseId, cb)
@@ -84,6 +85,8 @@ end)
 
 RegisterNUICallback('RemoveHouse', function(HouseId, cb)
     SetNuiFocus(false, false)
+
+    print(HouseId)
 
     local Success, Message = lib.callback.await('mani-housing:server:RemoveHouse', false, HouseId)
     if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end

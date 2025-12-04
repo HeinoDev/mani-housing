@@ -1,12 +1,14 @@
 {
     "Notify": {
         "Error": "Error",
+        "Success": "Success",
         "HouseNotExist": "The house does not exist.",
         "ShellNotExist": "House shell doesn't exist, contact staff.",
         "GenericError": "Something wen't wrong.",
         "NoPermission": "You do not have permission to perform this action.",
         "CannotAfford": "You cannot afford to do this.",
         "HouseNotForSale": "This house is not for sale.",
+        "HouseCreated": "You've created a house."
     },
     "3DText": {
         "EnterHouse": "[~g~E~s~] Enter House",
@@ -66,6 +68,7 @@
         "Edit": "Edit",
         "Duplicate": "Duplicate",
         "Sell": "Sell",
+        "Free": "Free",
 
         "EnterThePrice": "Enter the price",
         "SetPrice": "Set Price",

@@ -1,12 +1,14 @@
 {
     "Notify": {
         "Error": "Fejl",
+        "Success": "Succes",
         "HouseNotExist": "Dette hus findes ikke.",
         "ShellNotExist": "Husets shell findes ikke, kontakt staff.",
         "GenericError": "Noget gik galt.",
         "NoPermission": "Du har ikke tilladelse til at udføre denne handling.",
         "CannotAfford": "Du har ikke råd til at gøre dette.",
-        "HouseNotForSale": "Dette hus er ikke til salg."
+        "HouseNotForSale": "Dette hus er ikke til salg.",
+        "HouseCreated": "Du har oprettet et hus."
     },
     "3DText": {
         "EnterHouse": "[~g~E~s~] Gå ind i hus",
@@ -61,6 +63,7 @@
         "Edit": "Rediger",
         "Duplicate": "Dupliker",
         "Sell": "Sælg",
+        "Free": "Gratis",
         "EnterThePrice": "Indtast prisen",
         "SetPrice": "Indstil pris",
         "EnterPrice": "Indtast pris...",

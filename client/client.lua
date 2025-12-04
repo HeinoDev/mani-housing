@@ -699,6 +699,17 @@ local function ApplyEntityMatrix(entity, view)
     )
 end
 
+local function ResetSelection()
+    if cache.SelectedProp then
+        local Props = InHouse['Models']
+        local OldProp = Props[cache.SelectedProp]
+        if DoesEntityExist(OldProp) then
+            SetEntityDrawOutline(OldProp, false)
+        end
+    end
+    cache.SelectedProp = nil
+end
+
 local function UseGizmo()
     if not Editing['Prop'] then return LeaveCursorMode() end
     local Entity = Editing['Prop']
@@ -726,19 +737,21 @@ local function UseGizmo()
         if changed then
             ApplyEntityMatrix(Entity, matrixBuffer)
             if Editing['Snap'].Active then
-                local Pos = GetEntityCoords(Entity)
-                local GridSize = Editing['Snap'].GridSize
-                local SnappedX = (math.floor((Pos.x / GridSize) + 0.5)) * GridSize
-                local SnappedY = (math.floor((Pos.y / GridSize) + 0.5)) * GridSize
-                local SnappedZ = (math.floor((Pos.z / GridSize) + 0.5)) * GridSize
-                SetEntityCoordsNoOffset(Entity, SnappedX, SnappedY, SnappedZ, true, true, true)
-
-                local Rot = GetEntityRotation(Entity, 2)
-                local SnapAngle = Editing['Snap'].Angle
-                local SnappedRotX = (math.floor((Rot.x / SnapAngle) + 0.5)) * SnapAngle
-                local snappedRotY = (math.floor((Rot.y / SnapAngle) + 0.5)) * SnapAngle
-                local snappedRotZ = (math.floor((Rot.z / SnapAngle) + 0.5)) * SnapAngle
-                SetEntityRotation(Entity, SnappedRotX, snappedRotY, snappedRotZ, 2, true)
+                if Editing['Mode'] == 'Translate' then
+                    local Pos = GetEntityCoords(Entity)
+                    local GridSize = Editing['Snap'].GridSize
+                    local SnappedX = (math.floor((Pos.x / GridSize) + 0.5)) * GridSize
+                    local SnappedY = (math.floor((Pos.y / GridSize) + 0.5)) * GridSize
+                    local SnappedZ = (math.floor((Pos.z / GridSize) + 0.5)) * GridSize
+                    SetEntityCoordsNoOffset(Entity, SnappedX, SnappedY, SnappedZ, true, true, true)
+                elseif Editing['Mode'] == 'Rotate' then
+                    local Rot = GetEntityRotation(Entity, 2)
+                    local SnapAngle = Editing['Snap'].Angle
+                    local SnappedRotX = (math.floor((Rot.x / SnapAngle) + 0.5)) * SnapAngle
+                    local snappedRotY = (math.floor((Rot.y / SnapAngle) + 0.5)) * SnapAngle
+                    local snappedRotZ = (math.floor((Rot.z / SnapAngle) + 0.5)) * SnapAngle
+                    SetEntityRotation(Entity, SnappedRotX, snappedRotY, snappedRotZ, 2, true)
+                end
             end
         end
 
@@ -787,6 +800,27 @@ local function ToggleFocus()
     end
 end
 
+local function RaycastFromCursor(flag, distance)
+    local cursorX, cursorY = GetNuiCursorPosition()
+    local screenW, screenH = GetActiveScreenResolution()
+    local screenX = cursorX / screenW
+    local screenY = cursorY / screenH
+
+    local coords, normal = GetWorldCoordFromScreenCoord(screenX, screenY)
+    local destination = coords + normal * (distance or 10)
+    local handle = StartShapeTestLosProbe(coords.x, coords.y, coords.z, destination.x, destination.y, destination.z,
+        flag, InHouse['ShellModel'], 4)
+
+    while true do
+        Wait(0)
+        local retval, hit, endCoords, surfaceNormal, materialHash, entityHit = GetShapeTestResultIncludingMaterial(handle)
+
+        if retval ~= 1 then
+            return hit == 1, entityHit, endCoords
+        end
+    end
+end
+
 RegisterNUICallback('StartDecorating', function(_, cb)
     if not cache.InHouse then cb({ Success = false }) return end
     local House = HouseCache[cache.InHouse]
@@ -811,14 +845,7 @@ RegisterNUICallback('StopDecorating', function(_, cb)
 
     cache.Decorating = false
 
-    if cache.SelectedProp then
-        local Props = InHouse['Models']
-        local OldProp = Props[cache.SelectedProp]
-        if DoesEntityExist(OldProp) then
-            SetEntityDrawOutline(OldProp, false)
-        end
-    end
-    cache.SelectedProp = nil
+    ResetSelection()
 
     cb({})
 end)
@@ -829,6 +856,8 @@ RegisterNUICallback('PlaceFurniture', function(Data, cb)
     local HouseId = cache.InHouse
     if not HouseId then return end
 
+    ResetSelection()
+    
     RemoveEdit()
 
     SetNuiFocus(false, false)
@@ -869,12 +898,7 @@ RegisterNUICallback('SelectProp', function(PropIndex, cb)
     local Prop = Props[PropIndex]
     if not Prop then return end
 
-    if cache.SelectedProp then
-        local OldProp = Props[cache.SelectedProp]
-        if DoesEntityExist(OldProp) then
-            SetEntityDrawOutline(OldProp, false)
-        end
-    end
+    ResetSelection()
 
     cache.SelectedProp = PropIndex
 
@@ -910,7 +934,7 @@ RegisterNUICallback('EditProp', function(PropIndex, cb)
     })
 
     if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
-
+    
     cb({})
 end)
 
@@ -975,6 +999,47 @@ RegisterNUICallback('SellProp', function(PropIndex, cb)
     })
 
     if not Success then exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000) end
+
+    cb({})
+end)
+
+RegisterNUICallback('SelectFromMouse', function(_, cb)
+    local EntityType, Flag = 0, 511
+    local Hit, EntityHit, EndCoords = RaycastFromCursor(Flag, 20)
+
+    if EntityHit ~= 0 then
+        local success, result = pcall(GetEntityType, EntityHit)
+        EntityType = success and result or 0
+    end
+
+    if EntityType == 0 then
+        local _flag = Flag == 511 and 26 or 511
+        local _hit, _entityHit, _endCoords = RaycastFromCursor(_flag, 20)
+
+        Flag, Hit, EntityHit, EndCoords = _flag, _hit, _entityHit, _endCoords
+
+        if EntityHit ~= 0 then
+            local success, result = pcall(GetEntityType, EntityHit)
+            EntityType = success and result or 0
+        end
+    end
+
+    if not Hit then return end
+
+    for i = 1, #InHouse['Models'] do
+        local Model = InHouse['Models'][i]
+        if Model == EntityHit then
+            ResetSelection()
+
+            cache.SelectedProp = i
+
+            SetEntityDrawOutline(Model, true)
+            SetEntityDrawOutlineColor(Model, 255, 255, 0, 255)
+
+            cb({ Model = i })
+            return
+        end
+    end
 
     cb({})
 end)

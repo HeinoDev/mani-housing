@@ -15,6 +15,7 @@
     let rafId: number | null = null;
     let Editing = false;
     let selectedPropIndex: number | null = null;
+    let menuContainer: HTMLDivElement;
 
     $: categories = Object.keys($Config?.Furniture || {}).sort();  // Alphabetical order
 
@@ -64,18 +65,6 @@
     function CloseUI() {
         visibility.hide();
         fetchNui("StopDecorating");
-    }
-
-    function scrollLeft() {
-        if (scrollContainer) {
-            scrollContainer.scrollBy({ left: -212, behavior: 'smooth' });
-        }
-    }
-
-    function scrollRight() {
-        if (scrollContainer) {
-            scrollContainer.scrollBy({ left: 212, behavior: 'smooth' });
-        }
     }
 
     function handleMouseDown(e: MouseEvent) {
@@ -141,12 +130,24 @@
         }
     }
 
+    function handleSelectObject(e: MouseEvent) {
+        if (menuContainer && !menuContainer.contains(e.target as Node)) {
+            fetchNui("SelectFromMouse")
+                .then((Data) => {
+                    if (Data.Model) {
+                        selectedPropIndex = Data.Model - 1
+                    }
+                });
+        }
+    }
+
     onMount(async () => {
         await tick();
         if (scrollContainer) {
             scrollContainer.style.cursor = 'grab';
         }
         document.addEventListener('mousedown', handleRightClick);
+        document.addEventListener('mousedown', handleSelectObject);
     });
 
     onDestroy(() => {
@@ -158,6 +159,7 @@
             cancelAnimationFrame(rafId);
         }
         document.removeEventListener('mousedown', handleRightClick);
+        document.removeEventListener('mousedown', handleSelectObject);
     });
 
     $: if (searchTerm && searchTerm.length > 0) {
@@ -207,14 +209,10 @@
     useNuiEvent("UpdateDecorations", (Data: any) => {
         Props.set(Data);
 	});
-
-    function handleScrollMouseDown(e: MouseEvent) {
-        // handleMouseDown(e);
-    }
 </script>
 
 <div class="fixed inset-0 select-none z-40">
-    <div class="fixed bottom-0 left-0 right-0 w-full h-[450px] flex flex-col overflow-hidden transition-transform duration-500 ease-in-out" class:translate-y-full={Editing}>
+    <div class="fixed bottom-0 left-0 right-0 w-full h-[450px] flex flex-col overflow-hidden transition-transform duration-500 ease-in-out" class:translate-y-full={Editing} bind:this={menuContainer}>
         <div class="flex flex-1 overflow-hidden">
             <aside class="w-1/5 min-w-[200px] bg-[#1e1e1e] border-r border-[#333333] flex flex-col h-full rounded-t-md shadow-2xl flex-shrink-0">
                 <header class="bg-[#1a1a1a] border-b border-[#333333] px-4 py-3 flex justify-between items-center rounded-t-md">
@@ -249,7 +247,7 @@
                     <div class="w-full h-[272px] bg-[#1e1e1e] rounded-b-md border border-[#333333] overflow-hidden shadow-2xl relative">
                         <div
                             bind:this={scrollContainer}
-                            on:mousedown|preventDefault={handleScrollMouseDown}
+                            on:mousedown|preventDefault={handleMouseDown}
                             class="h-full p-3 overflow-x-auto overflow-y-hidden hide-scrollbar-horizontal absolute inset-0 select-none"
                         >
                             <div class="grid grid-rows-[118px_118px] auto-cols-[200px] grid-flow-col gap-3 w-max h-full">
@@ -265,7 +263,11 @@
                                             </div>
                                         </div>
                                         <div class="flex justify-between items-center mt-auto text-sm">
-                                            <span class="text-green-400 font-medium">${item.Price.toLocaleString()}</span>
+                                            {#if !$Config.FreeFurnitue}
+                                                <span class="text-green-400 font-medium">${item.Price.toLocaleString()}</span>
+                                            {:else}
+                                                <span class="text-green-400 font-medium">{$Locales['UI.Free']}</span>
+                                            {/if}
                                             <button
                                                 on:click={() => placeFurniture(item)}
                                                 class="bg-blue-500/40 text-blue-300 hover:bg-blue-500/50 border border-blue-500/50 hover:border-blue-400 px-3 py-1 rounded font-medium transition-colors text-xs whitespace-nowrap"
@@ -312,19 +314,19 @@
                                 on:click={() => editProp(selectedPropIndex)}
                                 class="bg-blue-500/40 text-blue-300 hover:bg-blue-500/50 border border-blue-500/50 hover:border-blue-400 px-2 py-1.5 rounded font-medium transition-colors text-xs"
                             >
-                                Edit
+                                {$Locales["UI.Edit"]}
                             </button>
                             <button
                                 on:click={() => duplicateProp(selectedPropIndex)}
                                 class="bg-purple-500/40 text-purple-300 hover:bg-purple-500/50 border border-purple-500/50 hover:border-purple-400 px-2 py-1.5 rounded font-medium transition-colors text-xs"
                             >
-                                Duplicate
+                                {$Locales["UI.Duplicate"]}
                             </button>
                             <button
                                 on:click={() => sellProp(selectedPropIndex)}
                                 class="bg-red-500/40 text-red-300 hover:bg-red-500/50 border border-red-500/50 hover:border-red-400 px-2 py-1.5 rounded font-medium transition-colors text-xs"
                             >
-                                Sell
+                                {$Locales["UI.Sell"]}
                             </button>
                         </div>
                     </div>

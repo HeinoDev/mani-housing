@@ -137,7 +137,7 @@ Config.Furniture = {
         },
         {
             Model = 'apa_p_h_acc_artwalls_03',
-            Label = 'Framed Jersey A',
+            Label = 'Framed Jersey B',
             Price = 100,
         },
     },
