@@ -705,6 +705,9 @@ function HouseClass:RunAction(Action)
     end
 end
 
+---@return table
+exports('GetClass', function() return HouseClass end)
+
 ---@param HouseId number
 ---@return table HouseCache[HouseId]
 exports('GetHouse', function(HouseId) return HouseCache[HouseId] end)
