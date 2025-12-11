@@ -81,8 +81,9 @@ CreateThread(function()
         PlayerCache[Keyholder.identifier] = PlayerCache[Keyholder.identifier] or {}
         PlayerCache[Keyholder.identifier].Keys = PlayerCache[Keyholder.identifier].Keys or {}
 
-        for HouseId, Data in pairs(Keys) do
-            if HouseCache[HouseId] then
+        for StringId, Data in pairs(Keys) do
+            local HouseId = tonumber(StringId)
+            if HouseId and HouseCache[HouseId] then
                 PlayerCache[Keyholder.identifier].Keys[HouseId] = Data
                 HouseCache[HouseId].Keyholders[Keyholder.identifier] = {
                     Character = Keyholder.character,
@@ -483,9 +484,9 @@ function HouseClass:AddKeyholder(Source, Permissions, IgnoreClient)
 
     PlayerCache[PlayerData.Identifier].Keys[self.HouseId] = Permissions
 
-    MySQL.Async.execute('REPLACE INTO `mani_housekeys` (`identifier`, `keys`, `character`) VALUES (@identifier, @metadata, @character)', {
+    MySQL.Async.execute('REPLACE INTO `mani_housekeys` (`identifier`, `keys`, `character`) VALUES (@identifier, @keys, @character)', {
         ['@identifier'] = PlayerData.Identifier,
-        ['@metadata'] = json.encode(PlayerCache[PlayerData.Identifier].Keys),
+        ['@keys'] = json.encode(PlayerCache[PlayerData.Identifier].Keys),
         ['@character'] = PlayerData.Character.Fullname
     })
 
