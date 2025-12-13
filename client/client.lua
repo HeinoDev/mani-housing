@@ -301,7 +301,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
         if HousePoints[HouseIndex]['Garage'] then HousePoints[HouseIndex]['Garage']:remove() end
         HousePoints[HouseIndex]['Garage'] = lib.points.new({
             coords = GarageCoords,
-            distance = Config.Distances['Interact'],
+            distance = Config.Distances['Interact'] * 4,
             onEnter = function(self)
                 House = HouseCache[House.HouseId]
                 local PlayerData = exports['mani-bridge']:GetPlayerData()
@@ -312,10 +312,22 @@ local function CreateHouse(HouseIndex, House, PlayerData)
             nearby = function(self)
                 if not self.HasAcess then return end
 
-                Draw3DText(GarageCoords.x, GarageCoords.y, GarageCoords.z, locale('3DText.Garage'))
+                if self.currentDistance < Config.Distances['Interact'] then
+                    Draw3DText(GarageCoords.x, GarageCoords.y, GarageCoords.z, locale('3DText.Garage'))
 
-                if IsControlJustReleased(0, 38) then
-                    Util.InteractGarage(House)
+                    if IsControlJustReleased(0, 38) then
+                        Util.InteractGarage(House)
+                    end
+                else
+                    DrawMarker(
+                        36, -- Marker type
+                        House.Coords.Garage.x, House.Coords.Garage.y, House.Coords.Garage.z,
+                        0.0, 0.0, 0.0, -- Direction
+                        0.0, 0.0, 0.0, -- Rotation
+                        1.0, 1.0, 1.0, -- Scale
+                        0, 150, 255, 150, -- RGBA color (light blue)
+                        false, true, 2, false, nil, nil, false
+                    )
                 end
             end
         })

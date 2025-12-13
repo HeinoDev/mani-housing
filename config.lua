@@ -17,6 +17,12 @@ Config.Distances = {
 	['JobMode'] = 20.0 -- Distance for real estate job mode.
 }
 
+Config.Commision = {
+	['RealEstate'] = 0.10,
+	['Agent'] = 0.02, -- Comment out, if Seller shoulnd't receive commision
+	['Owner'] = 1.0
+}
+
 Config.Blips = {
 	['Owned'] = {
 		Sprite = 40,

@@ -260,9 +260,10 @@ lib.callback.register('mani-housing:server:PurchaseHouse', function(Source, Hous
     if not exports['mani-bridge']:RemoveMoneyAuto(Source, { 'money', 'bank' }, Price) then return false, locale('Notify.CannotAfford') end
 
     if House.Owner ~= '' then
-        exports['mani-bridge']:AddMoneyOffline(House.Owner, 'bank', Price)
+        exports['mani-bridge']:AddMoneyOffline(House.Owner, 'bank', Price * Config.Commision['Owner'])
     else
-        Util.AddMoneyForJob(SellerJob, Price)
+        if Config.Commision['Agent'] then exports['mani-bridge']:AddMoneyOffline(SalesData.SalesmanIdentifier, 'bank', Price * Config.Commision['Agent']) end
+        Util.AddMoneyForJob(SellerJob, Price * Config.Commision['RealEstate'])
     end
 
     House:SetOwner(PlayerData)
