@@ -189,7 +189,7 @@ local function EnterHouse(Data)
         })
     end
 
-    if House.Coords.Stash then
+    if House.Coords.Stash and HasAccess(House, Data.Identifier, 'Stash') then
         House.Coords.Stash = vec3(House.Coords.Stash.x, House.Coords.Stash.y, House.Coords.Stash.z)
 
         InHouse['Points']['Stash'] = lib.points.new({
@@ -612,10 +612,15 @@ RegisterNetEvent('mani-housing:client:UpdatePoint', function(Coords, Point)
     local HouseId = cache.InHouse
     if not HouseId then return end
 
-    if InHouse['Points'][Point] then InHouse['Points'][Point]:remove() end
+    local PlayerData = exports['mani-bridge']:GetPlayerData()
+    if not PlayerData then return end
 
     local IsWardrobe = Point == 'Wardrobe'
     local IsStash = Point == 'Stash'
+
+    if IsStash and not HasAccess(HouseId, PlayerData.Identifier, 'Stash') then return end
+
+    if InHouse['Points'][Point] then InHouse['Points'][Point]:remove() end
 
     InHouse['Points'][Point] = lib.points.new({
         coords = Coords,
