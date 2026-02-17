@@ -13,6 +13,7 @@ Config.Commands = {
 
 Config.Distances = {
 	['Main'] = 7.5, -- When the player can use house interactions.
+	['Garage'] = 2.5, -- When the player can enter and interact with the garage.
 	['Interact'] = 0.75, -- When the player can enter and interact with interactions.
 	['JobMode'] = 20.0 -- Distance for real estate job mode.
 }

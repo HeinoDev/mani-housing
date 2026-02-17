@@ -228,7 +228,7 @@ end
 
 ---@param HouseIndex number
 ---@param House table
----@param PlayerData table
+---@param PlayerData? table
 local function CreateHouse(HouseIndex, House, PlayerData)
     cache.CurrentHouse = nil
 
@@ -301,7 +301,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
         if HousePoints[HouseIndex]['Garage'] then HousePoints[HouseIndex]['Garage']:remove() end
         HousePoints[HouseIndex]['Garage'] = lib.points.new({
             coords = GarageCoords,
-            distance = Config.Distances['Interact'] * 4,
+            distance = Config.Distances['Garage'] * 2,
             onEnter = function(self)
                 House = HouseCache[House.HouseId]
                 local PlayerData = exports['mani-bridge']:GetPlayerData()
@@ -312,7 +312,7 @@ local function CreateHouse(HouseIndex, House, PlayerData)
             nearby = function(self)
                 if not self.HasAcess then return end
 
-                if self.currentDistance < Config.Distances['Interact'] then
+                if self.currentDistance < Config.Distances['Garage'] then
                     Draw3DText(GarageCoords.x, GarageCoords.y, GarageCoords.z, locale('3DText.Garage'))
 
                     if IsControlJustReleased(0, 38) then

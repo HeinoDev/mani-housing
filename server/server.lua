@@ -387,7 +387,6 @@ lib.callback.register('mani-housing:server:SellHouse', function(Source, Data)
 
     House:Sell(Price)
 
-    
     Util.Log(Source, ('[Housing] [%s] | %s sat a house up for sale (HouseID: %s)'):format(
         Source,
         PlayerData.Character.Firstname,
@@ -469,15 +468,16 @@ end)
 ---@param Permissions table
 ---@param IgnoreClient boolean
 function HouseClass:AddKeyholder(Source, Permissions, IgnoreClient)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
     local PlayerData = exports['mani-bridge']:GetPlayerData(Source)
     if not PlayerData then return end
 
     if PlayerData.Identifier == self.Owner then return end
-    if HouseCache[self.HouseId].Keyholders[PlayerData.Identifier] then return end
+    if self.Keyholders[PlayerData.Identifier] then return end
 
-    HouseCache[self.HouseId].Keyholders[PlayerData.Identifier] = {
+    self.Keyholders[PlayerData.Identifier] = {
         Character = PlayerData.Character.Fullname,
         Permissions = Permissions
     }
@@ -493,16 +493,17 @@ function HouseClass:AddKeyholder(Source, Permissions, IgnoreClient)
         ['@character'] = PlayerData.Character.Fullname
     })
 
-    if not IgnoreClient then TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Update') end
+    if not IgnoreClient then TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update') end
 end
 
 ---@param Identifier string
 ---@param Permissions table
 function HouseClass:UpdatePermissions(Identifier, Permissions)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
-    if not HouseCache[self.HouseId].Keyholders[Identifier] then return end
-    HouseCache[self.HouseId].Keyholders[Identifier].Permissions = Permissions
+    if not self.Keyholders[Identifier] then return end
+    self.Keyholders[Identifier].Permissions = Permissions
 
     PlayerCache[Identifier] = PlayerCache[Identifier] or {}
     PlayerCache[Identifier].Keys = PlayerCache[Identifier].Keys or {}
@@ -514,16 +515,17 @@ function HouseClass:UpdatePermissions(Identifier, Permissions)
         Identifier
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Update')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
 ---@param Identifier string
 ---@param IgnoreClient boolean
 function HouseClass:RemoveKeyholder(Identifier, IgnoreClient)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
-    if not HouseCache[self.HouseId].Keyholders[Identifier] then return end
-    HouseCache[self.HouseId].Keyholders[Identifier] = nil
+    if not self.Keyholders[Identifier] then return end
+    self.Keyholders[Identifier] = nil
 
     PlayerCache[Identifier] = PlayerCache[Identifier] or {}
     PlayerCache[Identifier].Keys = PlayerCache[Identifier].Keys or {}
@@ -535,7 +537,7 @@ function HouseClass:RemoveKeyholder(Identifier, IgnoreClient)
         Identifier
     })
 
-    if not IgnoreClient then TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Update') end
+    if not IgnoreClient then TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update') end
 end
 
 ---@param Identifier string
@@ -549,68 +551,73 @@ end
 
 ---@param PlayerData table
 function HouseClass:SetOwner(PlayerData)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
-    HouseCache[self.HouseId].Owner = PlayerData.Identifier
-    HouseCache[self.HouseId].SalesData.OwnerName = PlayerData.Character.Fullname
-    HouseCache[self.HouseId].State = 1
+    self.Owner = PlayerData.Identifier
+    self.SalesData.OwnerName = PlayerData.Character.Fullname
+    self.State = 1
 
     MySQL.update.await('UPDATE mani_houses SET owner = ?, salesdata = ?, state = 1 WHERE houseid = ?', {
-        HouseCache[self.HouseId].Owner, json.encode(HouseCache[self.HouseId].SalesData), HouseCache[self.HouseId].HouseId
+        self.Owner, json.encode(self.SalesData), self.HouseId
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Update')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
 ---@param Coords vector3
 function HouseClass:PlaceWardrobe(Coords)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
-    HouseCache[self.HouseId].Coords.Wardrobe = Coords
+    self.Coords.Wardrobe = Coords
 
     MySQL.update.await('UPDATE mani_houses SET coords = ? WHERE houseid = ?', {
-        json.encode(HouseCache[self.HouseId].Coords), self.HouseId
+        json.encode(self.Coords), self.HouseId
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Update')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 
     self:RunAction(function(HouseSource)
-        TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, HouseCache[self.HouseId].Coords.Wardrobe, 'Wardrobe')
+        TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, self.Coords.Wardrobe, 'Wardrobe')
     end)
 end
 
 ---@param Coords vector3
 function HouseClass:PlaceStash(Coords)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
-    HouseCache[self.HouseId].Coords.Stash = Coords
+    self.Coords.Stash = Coords
 
     MySQL.update.await('UPDATE mani_houses SET coords = ? WHERE houseid = ?', {
-        json.encode(HouseCache[self.HouseId].Coords), self.HouseId
+        json.encode(self.Coords), self.HouseId
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Update')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 
     self:RunAction(function(HouseSource)
-        TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, HouseCache[self.HouseId].Coords.Stash, 'Stash')
+        TriggerClientEvent('mani-housing:client:UpdatePoint', HouseSource, self.Coords.Stash, 'Stash')
     end)
 end
 
 ---@param Coords vector3
 function HouseClass:SetGarage(Coords)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
-    HouseCache[self.HouseId].Coords.Garage = Coords
+    self.Coords.Garage = Coords
 
     MySQL.update.await('UPDATE mani_houses SET coords = ? WHERE houseid = ?', {
-        json.encode(HouseCache[self.HouseId].Coords), self.HouseId
+        json.encode(self.Coords), self.HouseId
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Update')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
 function HouseClass:Remove()
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
     MySQL.query.await('DELETE FROM mani_houses WHERE houseid = ?', {
         self.HouseId
@@ -620,49 +627,52 @@ function HouseClass:Remove()
         self:RemoveKeyholder(Identifier, true)
     end
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Remove')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Remove')
 
-    HouseCache[self.HouseId] = nil
+    self = nil
 end
 
 ---@param State number
 function HouseClass:SetState(State)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
     if type(State) ~= 'number' then return end
 
-    HouseCache[self.HouseId].State = State
+    self.State = State
 
     MySQL.update.await('UPDATE mani_houses SET state = ? WHERE houseid = ?', {
-        HouseCache[self.HouseId].State, self.HouseId
+        self.State, self.HouseId
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Update')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
 ---@param Price number
 function HouseClass:Sell(Price)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
     if type(Price) ~= 'number' then return end
 
-    HouseCache[self.HouseId].State = 0
-    HouseCache[self.HouseId].SalesData.Price = Price
+    self.State = 0
+    self.SalesData.Price = Price
 
-    for Identifier, Data in pairs(HouseCache[self.HouseId].Keyholders) do
-        HouseCache[self.HouseId]:RemoveKeyholder(Identifier, true)
+    for Identifier, Data in pairs(self.Keyholders) do
+        self:RemoveKeyholder(Identifier, true)
     end
 
     MySQL.update.await('UPDATE mani_houses SET state = ?, salesdata = ? WHERE houseid = ?', {
-        HouseCache[self.HouseId].State,
-        json.encode(HouseCache[self.HouseId].SalesData),
+        self.State,
+        json.encode(self.SalesData),
         self.HouseId
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'Update')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'Update')
 end
 
 ---@param Data table
 function HouseClass:AddDecoration(Data)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
     local Model = Data.Model
     local Label = Data.Label
@@ -670,7 +680,7 @@ function HouseClass:AddDecoration(Data)
     local Position = Data.Position
     local Rotation = Data.Rotation
 
-    HouseCache[self.HouseId].Decor[#HouseCache[self.HouseId].Decor + 1] = {
+    self.Decor[#self.Decor + 1] = {
         Model = Model,
         Label = Label,
         Price = Price,
@@ -679,48 +689,51 @@ function HouseClass:AddDecoration(Data)
     }
 
     MySQL.update.await('UPDATE mani_houses SET decor = ? WHERE houseid = ?', {
-        json.encode(HouseCache[self.HouseId].Decor),
+        json.encode(self.Decor),
         self.HouseId
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'UpdateDecoration')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'UpdateDecoration')
 end
 
 ---@param Data table
 function HouseClass:EditDecoration(Data)
-    if not HouseCache[self.HouseId] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
     local DecorIndex = Data.DecorIndex
 
     local Position = Data.Position
     local Rotation = Data.Rotation
 
-    if not HouseCache[self.HouseId].Decor[DecorIndex] then return end
+    if not self.Decor[DecorIndex] then return end
 
-    HouseCache[self.HouseId].Decor[DecorIndex].Position = Position
-    HouseCache[self.HouseId].Decor[DecorIndex].Rotation = Rotation
+    self.Decor[DecorIndex].Position = Position
+    self.Decor[DecorIndex].Rotation = Rotation
 
     MySQL.update.await('UPDATE mani_houses SET decor = ? WHERE houseid = ?', {
-        json.encode(HouseCache[self.HouseId].Decor),
+        json.encode(self.Decor),
         self.HouseId
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'UpdateDecoration')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'UpdateDecoration')
 end
 
 ---@param DecorIndex number
 function HouseClass:SellDecoration(DecorIndex)
-    if not HouseCache[self.HouseId] then return end
-    if not HouseCache[self.HouseId].Decor[DecorIndex] then return end
+    self = HouseCache[self.HouseId]
+    if not self then return end
 
-    table.remove(HouseCache[self.HouseId].Decor, DecorIndex)
+    if not self.Decor[DecorIndex] then return end
+
+    table.remove(self.Decor, DecorIndex)
 
     MySQL.update.await('UPDATE mani_houses SET decor = ? WHERE houseid = ?', {
-        json.encode(HouseCache[self.HouseId].Decor),
+        json.encode(self.Decor),
         self.HouseId
     })
 
-    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, HouseCache[self.HouseId], 'UpdateDecoration')
+    TriggerClientEvent('mani-housing:client:UpdateHouse', -1, self, 'UpdateDecoration')
 end
 
 ---@param Action function
@@ -734,14 +747,14 @@ end
 exports('GetClass', function() return HouseClass end)
 
 ---@param HouseId number
----@return table HouseCache[HouseId]
+---@return table
 exports('GetHouse', function(HouseId) return HouseCache[HouseId] end)
 
 exports('GetHouses', function() return HouseCache end)
 
----@param Identifier string
+---@param Identifier string|number
 ---@param ReturnByIndex boolean
----@return table Houses
+---@return table
 exports('GetPlayerHouses', function(Identifier, ReturnByIndex)
     if type(Identifier) == 'number' then
         local PlayerData = exports['mani-bridge']:GetPlayerData(Identifier)
@@ -758,4 +771,83 @@ exports('GetPlayerHouses', function(Identifier, ReturnByIndex)
     end
 
     return Houses
+end)
+
+exports('AddKeyholder', function(HouseId, Source, Permissions, IgnoreClient)
+    local House = HouseCache[HouseId]
+    if not House then return false end
+
+    House:AddKeyholder(Source, Permissions, IgnoreClient)
+
+    return true
+end)
+
+exports('RemoveKeyholder', function(HouseId, Identifier, IgnoreClient)
+    local House = HouseCache[HouseId]
+    if not House then return false end
+
+    House:RemoveKeyholder(Identifier, IgnoreClient)
+
+    return true
+end)
+
+exports('UpdatePermissions', function(HouseId, Identifier, Permissions)
+    local House = HouseCache[HouseId]
+    if not House then return false end
+
+    House:UpdatePermissions(Identifier, Permissions)
+
+    return true
+end)
+
+exports('HasAccess', function(HouseId, Identifier, Key)
+    local House = HouseCache[HouseId]
+    if not House then return false end
+
+    return House:HasAccess(Identifier, Key)
+end)
+
+exports('SetOwner', function(HouseId, PlayerData)
+    local House = HouseCache[HouseId]
+    if not House then return false end
+
+    House:SetOwner(PlayerData)
+
+    return true
+end)
+
+exports('Remove', function(HouseId)
+    local House = HouseCache[HouseId]
+    if not House then return false end
+
+    House:Remove()
+
+    return true
+end)
+
+exports('SetState', function(HouseId, State)
+    local House = HouseCache[HouseId]
+    if not House then return false end
+
+    House:SetState(State)
+
+    return true
+end)
+
+exports('Sell', function(HouseId, Price)
+    local House = HouseCache[HouseId]
+    if not House then return false end
+
+    House:Sell(Price)
+
+    return true
+end)
+
+exports('RunAction', function(HouseId, Action)
+    local House = HouseCache[HouseId]
+    if not House then return false end
+
+    House:RunAction(Action)
+
+    return true
 end)
