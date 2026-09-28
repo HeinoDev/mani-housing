@@ -15,10 +15,10 @@ function Util.InteractGarage(House)
 end
 
 function Util.OpenWardrobe()
-    if Config.WardrobeScript == 'illenium-appearance' then
+    if Config.Clothing == 'illenium-appearance' then
         TriggerEvent('illenium-appearance:client:openOutfitMenu')
-    elseif Config.WardrobeScript == 'custom' then
-        -- Add your own wardrobe/clothing integration here.
+    elseif Config.Clothing == 'custom' then
+        -- Add your own clothing integration here.
     else -- 'rcore_clothing'
         TriggerEvent('rcore_clothing:openClothingShopWithEverythingAndFree')
     end
