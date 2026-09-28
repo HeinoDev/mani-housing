@@ -24,6 +24,8 @@ Config.Commision = {
 	['Owner'] = 1.0
 }
 
+Config.StashPinEditCost = 10000
+
 Config.Blips = {
 	['Owned'] = {
 		Sprite = 40,

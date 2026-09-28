@@ -62,6 +62,18 @@ RegisterNUICallback('PlaceWardrobe', function(_, cb)
     cb({})
 end)
 
+RegisterNUICallback('SetStashPin', function(Data, cb)
+    local Success, Message = lib.callback.await('mani-housing:server:SetStashPin', false, Data)
+    if Success then
+        exports['mani-bridge']:Notify(locale('Notify.Success'), Message, 'success', 5000)
+    else
+        exports['mani-bridge']:Notify(locale('Notify.Error'), Message, 'error', 5000)
+    end
+    cb({
+        Success = Success
+    })
+end)
+
 RegisterNUICallback('PlaceStash', function(_, cb)
     SetNuiFocus(false, false)
     local HouseId = cache.InHouse
