@@ -71,6 +71,8 @@
         "Confirm": "Bekræft",
         "SelectEntrance": "for at vælge indgang",
         "SelectGarage": "for at vælge garage indgang",
+        "SelectWardrobe": "for at placere garderobe",
+        "SelectStash": "for at placere stash",
         "Press": "Tryk",
         "EditProperty": "Rediger ejendom",
         "HouseNotFound": "Hus ikke fundet.",

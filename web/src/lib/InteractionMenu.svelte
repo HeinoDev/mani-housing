@@ -58,12 +58,12 @@
 
     function placeWardrobe() {
         fetchNui("PlaceWardrobe");
-        visibility.hide();
+        Current.set("guide");
     }
 
     function placeStash() {
         fetchNui("PlaceStash");
-        visibility.hide();
+        Current.set("guide");
     }
 
     function startDecorating() {
