@@ -1,7 +1,9 @@
+local Config = lib.load('config')
+
 local Util = {}
 
 function Util.InDistance(House) -- When the player is near a house.
-    
+
 end
 
 function Util.InteractGarage(House)
@@ -13,7 +15,13 @@ function Util.InteractGarage(House)
 end
 
 function Util.OpenWardrobe()
-    TriggerEvent('rcore_clothing:openClothingShopWithEverythingAndFree')
+    if Config.WardrobeScript == 'illenium-appearance' then
+        TriggerEvent('illenium-appearance:client:openOutfitMenu')
+    elseif Config.WardrobeScript == 'custom' then
+        -- Add your own wardrobe/clothing integration here.
+    else -- 'rcore_clothing'
+        TriggerEvent('rcore_clothing:openClothingShopWithEverythingAndFree')
+    end
 end
 
 ---@param House table

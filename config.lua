@@ -26,6 +26,9 @@ Config.Commision = {
 
 Config.StashPinEditCost = 10000
 
+-- 'rcore_clothing' | 'illenium-appearance' | 'custom' (fill in your own logic in open/cl_open.lua)
+Config.WardrobeScript = 'rcore_clothing'
+
 Config.Blips = {
 	['Owned'] = {
 		Sprite = 40,
